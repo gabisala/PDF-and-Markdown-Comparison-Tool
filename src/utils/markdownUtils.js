@@ -1,5 +1,6 @@
 import { marked } from 'marked';
 import { diff_match_patch } from 'diff-match-patch';
+import { createGitHubStyleDiff } from './diffing';
 
 /**
  * Process a Markdown file and convert it to HTML
@@ -107,6 +108,24 @@ export function compareMarkdown(text1, text2) {
   const html1 = marked.parse(text1);
   const html2 = marked.parse(text2);
   
+  // Generate GitHub-style diff
+  const githubDiff = createGitHubStyleDiff(text1, text2, 'document.md');
+  
+  // Count changes for summary
+  const summary = {
+    additions: 0,
+    deletions: 0,
+    changes: 0
+  };
+  
+  diffArray.forEach(entry => {
+    const [type] = entry;
+    if (type === -1) summary.deletions++;
+    if (type === 1) summary.additions++;
+  });
+  
+  summary.changes = summary.additions + summary.deletions;
+  
   return {
     rawText: {
       diffArray,
@@ -115,6 +134,10 @@ export function compareMarkdown(text1, text2) {
     renderedHtml: {
       html1,
       html2
+    },
+    githubDiff: {
+      ...githubDiff,
+      summary
     }
   };
 }
@@ -175,6 +198,25 @@ function createLineDiff(lines1, lines2) {
   }
   
   return lineDiffs;
+}
+
+/**
+ * Perform character-level diff on two strings
+ * @param {string} text1 - Original text
+ * @param {string} text2 - Modified text
+ * @returns {Array} - Array of character diff objects
+ */
+export function characterLevelDiff(text1, text2) {
+  const dmp = new diff_match_patch();
+  const diffs = dmp.diff_main(text1, text2);
+  dmp.diff_cleanupSemantic(diffs);
+  
+  return diffs.map(([op, text]) => {
+    return {
+      type: op === -1 ? 'deletion' : op === 1 ? 'addition' : 'unchanged',
+      text
+    };
+  });
 }
 
 /**

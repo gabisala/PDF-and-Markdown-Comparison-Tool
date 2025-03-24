@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import GitHubDiffViewer from './GitHubDiffViewer';
 
 const MarkdownDiffViewer = ({ diffData }) => {
-  const [viewMode, setViewMode] = useState('raw'); // 'rendered' or 'raw'
+  const [viewMode, setViewMode] = useState('github'); // 'rendered', 'raw', or 'github'
   
   if (!diffData) {
     return (
@@ -16,6 +17,13 @@ const MarkdownDiffViewer = ({ diffData }) => {
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-end mb-2 gap-2">
+        <Button 
+          variant={viewMode === 'github' ? 'default' : 'outline'} 
+          size="sm"
+          onClick={() => setViewMode('github')}
+        >
+          GitHub-Style
+        </Button>
         <Button 
           variant={viewMode === 'rendered' ? 'default' : 'outline'} 
           size="sm"
@@ -33,7 +41,9 @@ const MarkdownDiffViewer = ({ diffData }) => {
       </div>
       
       <div className="flex-1 overflow-auto border rounded">
-        {viewMode === 'raw' ? (
+        {viewMode === 'github' ? (
+          <GitHubDiffViewer diffData={diffData} />
+        ) : viewMode === 'raw' ? (
           <div className="p-4">
             <div className="mb-4 text-sm">
               <div className="flex items-center gap-3 mb-2">
