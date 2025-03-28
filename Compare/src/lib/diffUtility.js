@@ -1,14 +1,41 @@
 import { diffLines, diffWordsWithSpace } from 'diff';
 
 /**
+ * Normalize text extracted from PDF for better comparison
+ * @param {string} pdfText - The text extracted from a PDF
+ * @returns {string} - Normalized text with consistent spacing
+ */
+export function normalizePDFText(pdfText) {
+  if (!pdfText) return '';
+  
+  return pdfText
+    // Normalize line breaks
+    .replace(/\r\n/g, '\n')
+    // Replace multiple spaces with a single space
+    .replace(/[ \t]+/g, ' ')
+    // Replace multiple newlines with a single newline
+    .replace(/\n+/g, '\n')
+    // Trim whitespace from the beginning and end of each line
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n')
+    .trim();
+}
+
+/**
  * Generate a line-by-line diff between two text strings
  * @param {string} oldText - The original text
  * @param {string} newText - The modified text
+ * @param {boolean} isPDF - Whether the text is from PDF files
  * @returns {Object} - An object containing the diff data
  */
-export function generateTextDiff(oldText, newText) {
+export function generateTextDiff(oldText, newText, isPDF = false) {
+  // Normalize text if from PDF
+  const processedOldText = isPDF ? normalizePDFText(oldText) : oldText;
+  const processedNewText = isPDF ? normalizePDFText(newText) : newText;
+  
   // Generate line-by-line diff
-  const lineDiff = diffLines(oldText, newText);
+  const lineDiff = diffLines(processedOldText, processedNewText);
   
   // Process diff to create a more structured representation
   const processedDiff = [];

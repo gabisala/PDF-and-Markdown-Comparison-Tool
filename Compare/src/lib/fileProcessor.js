@@ -1,6 +1,7 @@
 /**
  * File processor utility for handling different file types
  */
+import { processPDFFile as extractPDFContent } from './pdfProcessor';
 
 /**
  * Processes a file and returns its content based on the file type
@@ -93,25 +94,18 @@ async function processMarkdownFile(file) {
  * @returns {Promise<Object>} - The processed file content
  */
 async function processPDFFile(file) {
-  // For now, we're just reading the file as an ArrayBuffer
-  // Later we'll use PDF.js to render it to canvas
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+  try {
+    const pdfData = await extractPDFContent(file);
     
-    reader.onload = (event) => {
-      resolve({
-        type: 'pdf',
-        name: file.name,
-        content: event.target.result,
-        size: file.size,
-        lastModified: file.lastModified
-      });
+    return {
+      type: 'pdf',
+      name: file.name,
+      content: pdfData.text,
+      size: file.size,
+      lastModified: file.lastModified
     };
-    
-    reader.onerror = (error) => {
-      reject(error);
-    };
-    
-    reader.readAsArrayBuffer(file);
-  });
+  } catch (error) {
+    console.error('Error processing PDF file:', error);
+    throw new Error(`Failed to process PDF file: ${error.message}`);
+  }
 } 

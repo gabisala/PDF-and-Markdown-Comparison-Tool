@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import DropZone from './components/DropZone';
 import { GitHubDiffViewer } from './components/GitHubDiffViewer';
 import MarkdownViewer from './components/MarkdownViewer';
-import { processFile, isMarkdownFile } from './lib/fileProcessor';
+import ProgressIndicator from './components/ProgressIndicator';
+import { processFile, isMarkdownFile, isPDFFile } from './lib/fileProcessor';
 import { generateTextDiff, formatDiffForViewer } from './lib/diffUtility';
 
 function App() {
@@ -11,6 +12,8 @@ function App() {
   const [diffData, setDiffData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [processingStep, setProcessingStep] = useState('');
+  const [processingProgress, setProcessingProgress] = useState(null);
 
   const handleFileSelect = async (files) => {
     if (!files || files.length !== 2) {
@@ -24,27 +27,33 @@ function App() {
     setSelectedFiles(files);
     setLoading(true);
     setError(null);
+    setProcessingProgress(0);
     
     try {
-      // Process both files
+      // Process first file
+      setProcessingStep('Processing first file...');
       const file1 = await processFile(files[0]);
+      setProcessingProgress(33);
+      
+      // Process second file
+      setProcessingStep('Processing second file...');
       const file2 = await processFile(files[1]);
+      setProcessingProgress(66);
       
       setProcessedFiles([file1, file2]);
       
-      // Only generate text diff for markdown files for now
-      if (isMarkdownFile(files[0]) && isMarkdownFile(files[1])) {
-        const textDiff = generateTextDiff(file1.content, file2.content);
-        const formattedDiff = formatDiffForViewer({
-          ...textDiff,
-          fileName: file2.name // Use the second file name for the diff
-        });
-        setDiffData(formattedDiff);
-      } else {
-        // For now, we're not handling PDF diff yet
-        setDiffData(null);
-        setError("PDF comparison not yet implemented.");
-      }
+      // Check if both files are PDFs
+      const arePDFs = isPDFFile(files[0]) && isPDFFile(files[1]);
+      
+      // Generate diff based on file types
+      setProcessingStep('Comparing files...');
+      const textDiff = generateTextDiff(file1.content, file2.content, arePDFs);
+      const formattedDiff = formatDiffForViewer({
+        ...textDiff,
+        fileName: file2.name // Use the second file name for the diff
+      });
+      setProcessingProgress(100);
+      setDiffData(formattedDiff);
     } catch (err) {
       console.error('Error processing files:', err);
       setError(err.message);
@@ -53,6 +62,27 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const renderFilePreview = (fileData, index) => {
+    if (isMarkdownFile(selectedFiles[index])) {
+      return (
+        <MarkdownViewer 
+          markdownContent={fileData.content} 
+          fileName={fileData.name} 
+        />
+      );
+    } else if (isPDFFile(selectedFiles[index])) {
+      return (
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="font-medium mb-2">{fileData.name}</h3>
+          <div className="border p-3 rounded bg-gray-50 max-h-96 overflow-auto whitespace-pre-wrap font-mono text-sm">
+            {fileData.content}
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -64,9 +94,10 @@ function App() {
         <DropZone onFileSelect={handleFileSelect} />
         
         {loading && (
-          <div className="bg-white rounded-lg shadow p-6 flex justify-center items-center">
-            <p className="text-gray-600">Processing files...</p>
-          </div>
+          <ProgressIndicator 
+            message={processingStep} 
+            progress={processingProgress} 
+          />
         )}
         
         {error && (
@@ -75,16 +106,10 @@ function App() {
           </div>
         )}
         
-        {processedFiles && processedFiles.length === 2 && isMarkdownFile(selectedFiles[0]) && isMarkdownFile(selectedFiles[1]) && (
+        {processedFiles && processedFiles.length === 2 && (
           <div className="grid grid-cols-2 gap-4">
-            <MarkdownViewer 
-              markdownContent={processedFiles[0].content} 
-              fileName={processedFiles[0].name} 
-            />
-            <MarkdownViewer 
-              markdownContent={processedFiles[1].content} 
-              fileName={processedFiles[1].name} 
-            />
+            {renderFilePreview(processedFiles[0], 0)}
+            {renderFilePreview(processedFiles[1], 1)}
           </div>
         )}
         
