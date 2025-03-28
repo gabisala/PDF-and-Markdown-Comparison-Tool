@@ -1,9 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
-const GitHubDiffViewer = ({ diffData }) => {
+export const GitHubDiffViewer = ({ diffData }) => {
   const [viewMode, setViewMode] = useState('unified'); // 'unified' or 'split'
   const [currentDiffIndex, setCurrentDiffIndex] = useState(0);
   const [diffIndices, setDiffIndices] = useState([]);
@@ -108,20 +105,18 @@ const GitHubDiffViewer = ({ diffData }) => {
         {/* View Toggle */}
         <div className="flex justify-between items-center">
           <div className="flex gap-1">
-            <Button 
-              variant={viewMode === 'unified' ? 'default' : 'outline'} 
-              size="sm"
+            <button 
+              className={`px-3 py-1 text-sm rounded-md ${viewMode === 'unified' ? 'bg-blue-600 text-white' : 'bg-gray-100 border border-gray-300'}`}
               onClick={() => setViewMode('unified')}
             >
               Unified
-            </Button>
-            <Button 
-              variant={viewMode === 'split' ? 'default' : 'outline'} 
-              size="sm"
+            </button>
+            <button 
+              className={`px-3 py-1 text-sm rounded-md ${viewMode === 'split' ? 'bg-blue-600 text-white' : 'bg-gray-100 border border-gray-300'}`}
               onClick={() => setViewMode('split')}
             >
               Split
-            </Button>
+            </button>
           </div>
           <div className="flex gap-1 items-center">
             <span className="text-xs text-gray-500 mr-1">
@@ -129,22 +124,20 @@ const GitHubDiffViewer = ({ diffData }) => {
                 ? `${currentDiffIndex + 1}/${diffIndices.length}` 
                 : '0/0'}
             </span>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <button 
+              className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50"
               onClick={() => navigateDiff('prev')}
               disabled={diffIndices.length === 0}
             >
               &lt; Prev
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            </button>
+            <button 
+              className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50"
               onClick={() => navigateDiff('next')}
               disabled={diffIndices.length === 0}
             >
               Next &gt;
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -501,6 +494,4 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
       </div>
     </div>
   );
-};
-
-export { GitHubDiffViewer } 
+}; 

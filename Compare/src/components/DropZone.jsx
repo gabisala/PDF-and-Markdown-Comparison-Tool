@@ -1,6 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 const DropZone = ({ onFileSelect }) => {
   const [files, setFiles] = useState([]);
@@ -78,7 +76,7 @@ const DropZone = ({ onFileSelect }) => {
   };
 
   return (
-    <Card>
+    <div className="border rounded-lg shadow-sm">
       <div 
         className={`p-6 flex flex-col items-center justify-center border-2 border-dashed rounded-lg transition-colors ${
           isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
@@ -121,13 +119,12 @@ const DropZone = ({ onFileSelect }) => {
             PDF or Markdown files only (max 2 files)
           </p>
 
-          <Button
+          <button
             onClick={handleButtonClick}
-            className="mt-4"
-            variant="outline"
+            className="mt-4 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
           >
             Select Files
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -145,11 +142,9 @@ const DropZone = ({ onFileSelect }) => {
                   </span>
                   <span className="ml-2 text-sm truncate max-w-xs">{file.name}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => removeFile(index)}
-                  className="text-gray-500 hover:text-red-500"
+                  className="text-gray-500 hover:text-red-500 p-1"
                 >
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
@@ -160,13 +155,13 @@ const DropZone = ({ onFileSelect }) => {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                </Button>
+                </button>
               </li>
             ))}
           </ul>
         </div>
       )}
-    </Card>
+    </div>
   );
 };
 
