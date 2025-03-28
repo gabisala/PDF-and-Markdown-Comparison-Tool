@@ -28,6 +28,7 @@ function App() {
     setLoading(true);
     setError(null);
     setProcessingProgress(0);
+    setDiffData(null);
     
     try {
       // Process first file
@@ -41,6 +42,7 @@ function App() {
       setProcessingProgress(66);
       
       setProcessedFiles([file1, file2]);
+      console.log("Processed files:", [file1, file2]);
       
       // Check if both files are PDFs
       const arePDFs = isPDFFile(files[0]) && isPDFFile(files[1]);
@@ -52,8 +54,10 @@ function App() {
         ...textDiff,
         fileName: file2.name // Use the second file name for the diff
       });
-      setProcessingProgress(100);
+      
+      console.log("Generated diff data:", formattedDiff);
       setDiffData(formattedDiff);
+      setProcessingProgress(100);
     } catch (err) {
       console.error('Error processing files:', err);
       setError(err.message);
@@ -65,6 +69,8 @@ function App() {
   };
 
   const renderFilePreview = (fileData, index) => {
+    if (!selectedFiles || !selectedFiles[index]) return null;
+    
     if (isMarkdownFile(selectedFiles[index])) {
       return (
         <MarkdownViewer 
@@ -77,12 +83,20 @@ function App() {
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="font-medium mb-2">{fileData.name}</h3>
           <div className="border p-3 rounded bg-gray-50 max-h-96 overflow-auto whitespace-pre-wrap font-mono text-sm">
-            {fileData.content}
+            {fileData.content ? fileData.content : "No content available"}
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="font-medium mb-2">{fileData.name}</h3>
+          <div className="border p-3 rounded bg-gray-50 max-h-96 overflow-auto">
+            <pre className="text-xs">{fileData.content ? fileData.content : "No content available"}</pre>
           </div>
         </div>
       );
     }
-    return null;
   };
 
   return (
@@ -114,7 +128,7 @@ function App() {
         )}
         
         {diffData && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 my-6">
             <h2 className="text-lg font-semibold mb-4">Differences</h2>
             <GitHubDiffViewer diffData={diffData} />
           </div>
