@@ -50,7 +50,7 @@
   - [x] Customized highlighting for dark mode
   - [x] Enhanced token visibility in diff backgrounds
 - [x] Keyboard shortcuts for navigation
-- [ ] Export diff report as HTML or PDF
+- [x] Export diff report as HTML or PDF
 - [x] Dark mode support
 
 ## Dependencies Installation

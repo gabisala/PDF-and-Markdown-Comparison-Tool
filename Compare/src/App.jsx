@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import DropZone from './components/DropZone';
 import { GitHubDiffViewer } from './components/GitHubDiffViewer';
 import MarkdownViewer from './components/MarkdownViewer';
@@ -6,6 +6,7 @@ import ProgressIndicator from './components/ProgressIndicator';
 import ThemeToggle from './components/ThemeToggle';
 import { processFile, isMarkdownFile, isPDFFile } from './lib/fileProcessor';
 import { generateTextDiff, formatDiffForViewer } from './lib/diffUtility';
+import { exportDiffAsHTML, exportDiffAsPDF } from './lib/utils';
 
 function App() {
   const [selectedFiles, setSelectedFiles] = useState(null);
@@ -20,6 +21,12 @@ function App() {
   const topRef = useRef(null);
   const differencesRef = useRef(null);
   
+  // Add export dropdown state
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  
+  // Add ref for export dropdown
+  const exportDropdownRef = useRef(null);
+  
   // Scroll functions
   const scrollToTop = () => {
     topRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,6 +35,25 @@ function App() {
   const scrollToDifferences = () => {
     differencesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setShowExportDropdown(false);
+      }
+    }
+    
+    // Add event listener when dropdown is open
+    if (showExportDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportDropdown]);
 
   const handleFileSelect = async (files) => {
     if (!files || files.length !== 2) {
@@ -117,6 +143,51 @@ function App() {
     }
   };
 
+  // Export handlers
+  const handleExportHTML = () => {
+    if (!diffData || !processedFiles) return;
+    
+    // Generate the HTML with both file names
+    const html = exportDiffAsHTML(
+      diffData, 
+      `Diff Report - ${processedFiles[0].name} vs ${processedFiles[1].name}`,
+      {
+        oldFileName: processedFiles[0].name,
+        newFileName: processedFiles[1].name
+      }
+    );
+    
+    // Create a download link for the HTML
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `diff-report-${new Date().toISOString().slice(0, 10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+    setShowExportDropdown(false);
+  };
+  
+  const handleExportPDF = () => {
+    if (!diffData || !processedFiles) return;
+    
+    // Use the PDF export utility with both file names
+    exportDiffAsPDF(
+      diffData, 
+      `Diff Report - ${processedFiles[0].name} vs ${processedFiles[1].name}`,
+      {
+        oldFileName: processedFiles[0].name,
+        newFileName: processedFiles[1].name
+      }
+    );
+    
+    setShowExportDropdown(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 pt-12 transition-colors">
       <div ref={topRef} className="flex flex-col items-center justify-center mb-12">
@@ -175,8 +246,60 @@ function App() {
         
         {diffData && (
           <div ref={differencesRef} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 my-6">
-            <h2 className="text-lg font-semibold mb-4 dark:text-white">Differences</h2>
-            <GitHubDiffViewer diffData={diffData} />
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold dark:text-white">Differences</h2>
+              
+              {/* Export Dropdown */}
+              <div className="relative" ref={exportDropdownRef}>
+                <button 
+                  onClick={() => setShowExportDropdown(prev => !prev)}
+                  className="px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center"
+                  aria-haspopup="true"
+                  aria-expanded={showExportDropdown}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Export
+                </button>
+                
+                {showExportDropdown && (
+                  <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-700 shadow-lg ring-1 ring-black dark:ring-gray-600 ring-opacity-5 focus:outline-none">
+                    <div className="py-1">
+                      <button
+                        onClick={handleExportHTML}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      >
+                        Export as HTML
+                      </button>
+                      <button
+                        onClick={handleExportPDF}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      >
+                        Export as PDF (print)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {processedFiles && (
+              <div className="mb-4 flex flex-col sm:flex-row text-sm gap-3 text-gray-600 dark:text-gray-300">
+                <div>
+                  <span className="font-medium">Original:</span> {processedFiles[0].name}
+                </div>
+                <div>
+                  <span className="font-medium">Modified:</span> {processedFiles[1].name}
+                </div>
+              </div>
+            )}
+            <GitHubDiffViewer 
+              diffData={diffData} 
+              fileInfo={{
+                oldFileName: processedFiles?.[0]?.name,
+                newFileName: processedFiles?.[1]?.name
+              }}
+            />
           </div>
         )}
       </div>

@@ -12,7 +12,7 @@ import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-markdown';
 // Prism theme is imported in MarkdownViewer
 
-export const GitHubDiffViewer = ({ diffData }) => {
+export const GitHubDiffViewer = ({ diffData, fileInfo = {} }) => {
   const [viewMode, setViewMode] = useState('unified'); // 'unified' or 'split'
   const [currentDiffIndex, setCurrentDiffIndex] = useState(0);
   const [diffIndices, setDiffIndices] = useState([]);
@@ -260,19 +260,21 @@ export const GitHubDiffViewer = ({ diffData }) => {
       {/* Diff Content */}
       <div 
         ref={diffContentRef} 
-        className="flex-1 overflow-x-auto border rounded shadow-sm bg-white dark:bg-gray-800 dark:border-gray-700"
+        className="flex-1 overflow-x-auto border rounded shadow-sm bg-white dark:bg-gray-800 dark:border-gray-700 diff-content"
       >
         {viewMode === 'unified' ? (
           <UnifiedDiffView 
             diffData={diffData} 
             collapsedSections={collapsedSections} 
             toggleCollapsedSection={toggleCollapsedSection} 
+            fileInfo={fileInfo}
           />
         ) : (
           <SplitDiffView 
             diffData={diffData} 
             collapsedSections={collapsedSections} 
             toggleCollapsedSection={toggleCollapsedSection}
+            fileInfo={fileInfo}
           />
         )}
       </div>
@@ -405,7 +407,7 @@ const CollapsedSection = ({ count, onClick }) => (
   </tr>
 );
 
-const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) => {
+const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection, fileInfo = {} }) => {
   const fileName = diffData.fileName || 'Unknown File';
   const lines = diffData.lines || [];
   
@@ -453,7 +455,13 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
           {/* File header */}
           <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
             <td colSpan={4} className="p-2 text-gray-700 dark:text-gray-200 font-bold">
-              {fileName}
+              {fileInfo.oldFileName && fileInfo.newFileName ? (
+                <div className="flex flex-col">
+                  <div>{fileInfo.oldFileName} → {fileInfo.newFileName}</div>
+                </div>
+              ) : (
+                fileName
+              )}
             </td>
           </tr>
           
@@ -523,7 +531,7 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
   );
 };
 
-const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) => {
+const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection, fileInfo = {} }) => {
   const fileName = diffData.fileName || 'Unknown File';
   const lines = diffData.lines || [];
   
@@ -612,7 +620,7 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
               {/* File header */}
               <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
                 <td colSpan={2} className="p-2 text-gray-700 dark:text-gray-200 font-bold">
-                  {fileName} (Original)
+                  {fileInfo.oldFileName || `${fileName} (Original)`}
                 </td>
               </tr>
               
@@ -687,7 +695,7 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
               {/* File header */}
               <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
                 <td colSpan={2} className="p-2 text-gray-700 dark:text-gray-200 font-bold">
-                  {fileName} (Modified)
+                  {fileInfo.newFileName || `${fileName} (Modified)`}
                 </td>
               </tr>
               
