@@ -7,7 +7,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 /**
- * Extract text content from a PDF file
+ * Extract text content from a PDF file while preserving formatting
  * @param {ArrayBuffer} pdfBuffer - PDF file as ArrayBuffer
  * @returns {Promise<string>} Extracted text from the PDF
  */
@@ -27,14 +27,40 @@ export const extractTextFromPDF = async (pdfBuffer) => {
         console.log(`Processing page ${pageNum}`);
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map(item => item.str)
-          .join(' ');
-        fullText += pageText + '\n';
+        
+        let lastY, lastX, text = '';
+        const items = textContent.items;
+        
+        // Sort items by their vertical position (top to bottom)
+        items.sort((a, b) => b.transform[5] - a.transform[5] || a.transform[4] - b.transform[4]);
+        
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const currentY = item.transform[5];
+          const currentX = item.transform[4];
+          
+          // New paragraph detection (significant Y change)
+          if (lastY !== undefined && Math.abs(lastY - currentY) > 12) {
+            text += '\n\n';
+          }
+          // Same line but significant X change (like tabs or spaces)
+          else if (lastX !== undefined && lastY === currentY && (currentX - lastX) > 10) {
+            text += '    '; // Add spaces to preserve horizontal formatting
+          }
+          // Normal continuation of text
+          else if (i > 0 && lastY === currentY) {
+            text += ' ';
+          }
+          
+          text += item.str;
+          lastY = currentY;
+          lastX = currentX + (item.width || 0);
+        }
+        
+        fullText += text + '\n\n'; // Add page break
       } catch (pageError) {
         console.error(`Error processing page ${pageNum}:`, pageError);
-        // Continue with next page instead of failing completely
-        fullText += `[Error reading page ${pageNum}]\n`;
+        fullText += `[Error reading page ${pageNum}]\n\n`;
       }
     }
     
