@@ -8,15 +8,11 @@ export default defineConfig({
     open: true
   },
   optimizeDeps: {
-    include: ['pdfjs-dist/build/pdf.worker.mjs']
+    include: ['pdfjs-dist']
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          pdfjs: ['pdfjs-dist']
-        }
-      }
+    commonjsOptions: {
+      include: [/pdfjs-dist/]
     }
   }
 }) 
