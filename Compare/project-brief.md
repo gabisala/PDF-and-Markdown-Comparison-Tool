@@ -34,6 +34,11 @@ Imagine a web-based tool similar to GitHub's diff view, but specialized for comp
   - Red for deletions
 - Character-level diff highlighting
 - Toggle between raw markdown and rendered preview
+- Syntax highlighting for code blocks:
+  - Automatic language detection from file extensions
+  - Support for multiple languages (JavaScript, JSX, TypeScript, CSS, Python, Bash, JSON, Markdown)
+  - Dark mode compatible highlighting
+  - Enhanced readability in diff backgrounds
 
 ### 4. User Interface
 - Three-panel layout:
@@ -68,8 +73,17 @@ Imagine a web-based tool similar to GitHub's diff view, but specialized for comp
 
 2. **Markdown Processing**:
    - `marked`: For Markdown parsing and rendering
+   - `prismjs`: For code syntax highlighting
    ```javascript
-   // Example Markdown processing
+   // Example Markdown processing with syntax highlighting
+   marked.setOptions({
+     highlight: function(code, lang) {
+       if (lang && Prism.languages[lang]) {
+         return Prism.highlight(code, Prism.languages[lang], lang);
+       }
+       return code;
+     }
+   });
    const htmlContent = marked.parse(markdownText);
    ```
 

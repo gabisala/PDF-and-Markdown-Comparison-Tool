@@ -43,6 +43,9 @@ A browser-based tool that allows drag-and-drop comparison of PDF and Markdown fi
 1. Implement Marked.js for rendering
 2. Create toggle between raw and rendered Markdown views
 3. Implement syntax highlighting for code blocks
+   - Add Prism.js for code highlighting
+   - Configure language detection
+   - Customize token styles for both light and dark modes
 4. Add character-level diffing for precise changes
 
 ### Phase 4: GitHub-Style Diff Implementation
@@ -177,6 +180,66 @@ async function extractTextFromPDF(pdfBuffer) {
 - `generateSplitDiff(text1, text2)`: Creates GitHub-style split diff
 - `getNextDifference()`: Navigation helper for jumping to differences
 - `getPrevDifference()`: Navigation helper for jumping to differences
+
+### Syntax Highlighting Implementation
+1. **Markdown Viewer**:
+   - Integrate Prism.js for syntax highlighting
+   - Configure marked options to use Prism for code blocks
+   - Apply highlighting in rendered view
+   ```javascript
+   marked.setOptions({
+     highlight: function(code, lang) {
+       if (lang && Prism.languages[lang]) {
+         return Prism.highlight(code, Prism.languages[lang], lang);
+       }
+       return code;
+     }
+   });
+   ```
+
+2. **GitHub-Style Diff View**:
+   - Detect code language from file extension
+   - Apply highlighting to code blocks in diff view
+   - Custom styling for highlighted code in diff backgrounds
+   ```javascript
+   const detectLanguage = (fileName, lineContent) => {
+     // Extract extension from filename
+     if (fileName) {
+       const ext = fileName.split('.').pop().toLowerCase();
+       
+       const languageMap = {
+         'js': 'javascript',
+         'jsx': 'jsx',
+         'ts': 'typescript',
+         'tsx': 'tsx',
+         'css': 'css',
+         'py': 'python',
+         'sh': 'bash',
+         'json': 'json',
+         'md': 'markdown'
+       };
+       
+       if (languageMap[ext]) {
+         return languageMap[ext];
+       }
+     }
+     
+     // Fallback: detect from content for markdown code blocks
+     if (lineContent && lineContent.startsWith('```')) {
+       const lang = lineContent.substring(3).trim();
+       if (Prism.languages[lang]) {
+         return lang;
+       }
+     }
+     
+     return null;
+   };
+   ```
+
+3. **CSS Customization**:
+   - Theme customization for dark mode
+   - Enhanced token visibility in diff backgrounds
+   - Special handling for tokens in addition/deletion highlights
 
 ## Data Structures
 - **FileState**: { file, type, content, pages[] }

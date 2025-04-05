@@ -45,6 +45,10 @@
 ## Extra Features
 - [x] PDF text extraction with formatting preservation
 - [x] Syntax highlighting in diff view
+  - [x] Code language detection from file extensions
+  - [x] Support for multiple languages (JavaScript, JSX, TypeScript, CSS, Python, Bash, JSON, Markdown)
+  - [x] Customized highlighting for dark mode
+  - [x] Enhanced token visibility in diff backgrounds
 - [x] Keyboard shortcuts for navigation
 - [ ] Export diff report as HTML or PDF
 - [x] Dark mode support
