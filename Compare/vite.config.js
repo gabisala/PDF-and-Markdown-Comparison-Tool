@@ -6,5 +6,13 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true
+  },
+  optimizeDeps: {
+    include: ['pdfjs-dist']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/pdfjs-dist/]
+    }
   }
 }) 
