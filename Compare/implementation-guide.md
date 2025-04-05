@@ -4,20 +4,20 @@
 A browser-based tool that allows drag-and-drop comparison of PDF and Markdown files with GitHub-style diff views. The tool renders files side-by-side with a third panel highlighting differences, and provides both unified and split diff views.
 
 ## Core Requirements (Updated)
-- Compare two PDF files visually using canvas
+- Compare two PDF files with both visual and text-based comparison
 - Compare two Markdown files with GitHub-style diff highlighting
 - Generate difference highlights with clear color coding
 - Side-by-side and unified diff visualization
-- Multi-page PDF navigation
+- Multi-page PDF navigation with preserved formatting
 - Drag-and-drop file interface
 - Local-only operation (no server requirements)
 
 ## Technical Stack
 - **Frontend**: React with Vite
-- **PDF Processing**: PDF.js
+- **PDF Processing**: PDF.js with enhanced text extraction
 - **Markdown Processing**: Marked.js
 - **Diff Detection**:
-  - PDF: pixelmatch
+  - PDF: pixelmatch for visual, custom text processing for content
   - Markdown: diff-match-patch
 - **UI Components**: shadcn/ui
 - **Styling**: Tailwind CSS
@@ -31,12 +31,13 @@ A browser-based tool that allows drag-and-drop comparison of PDF and Markdown fi
 4. Create basic three-panel layout
 5. Implement drag-and-drop file interface
 
-### Phase 2: PDF Processing
-1. Integrate PDF.js
-2. Convert PDF pages to canvas elements
-3. Implement page navigation for multi-page PDFs
-4. Ensure proper sizing/scaling of PDF canvas
-5. Extract text where possible for text-based diffing
+### Phase 2: Enhanced PDF Processing
+1. Integrate PDF.js with worker configuration
+2. Implement advanced text extraction with formatting preservation
+3. Handle multi-page PDFs with proper text flow
+4. Process PDF structure (paragraphs, spacing)
+5. Maintain visual layout and formatting
+6. Extract text with position information
 
 ### Phase 3: Markdown Processing
 1. Implement Marked.js for rendering
@@ -67,11 +68,72 @@ A browser-based tool that allows drag-and-drop comparison of PDF and Markdown fi
 
 ## Technical Implementation Details
 
-### File Processing Workflow
+### PDF Processing Workflow
 1. File drop event → read file as ArrayBuffer
-2. Detect file type (PDF or Markdown)
-3. For PDF: PDF.js → parse → render to canvas + extract text if possible
-4. For Markdown: read as text → parse with Marked.js → render as HTML
+2. Initialize PDF.js worker
+3. Load PDF document and process each page:
+   - Extract text content with position information
+   - Preserve paragraph structure
+   - Maintain horizontal spacing
+   - Handle multi-column layouts
+4. Process text while maintaining format:
+   - Track vertical positions for paragraphs
+   - Preserve horizontal spacing for layout
+   - Handle special formatting cases
+5. Generate formatted text output suitable for comparison
+
+### Key Functions
+```javascript
+// PDF Processing
+async function processPDFFile(file) {
+  const buffer = await file.arrayBuffer();
+  const text = await extractTextFromPDF(buffer);
+  return {
+    text,
+    fileName: file.name,
+    fileType: 'pdf'
+  };
+}
+
+async function extractTextFromPDF(pdfBuffer) {
+  const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+  let fullText = '';
+  
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const textContent = await page.getTextContent();
+    
+    // Process text with position information
+    const items = textContent.items.sort((a, b) => 
+      b.transform[5] - a.transform[5] || a.transform[4] - b.transform[4]
+    );
+    
+    // Preserve formatting while extracting text
+    let lastY, lastX, text = '';
+    for (const item of items) {
+      const currentY = item.transform[5];
+      const currentX = item.transform[4];
+      
+      // Handle paragraph breaks and spacing
+      if (lastY !== undefined && Math.abs(lastY - currentY) > 12) {
+        text += '\n\n';
+      } else if (lastX !== undefined && lastY === currentY && (currentX - lastX) > 10) {
+        text += '    ';
+      } else if (lastY === currentY) {
+        text += ' ';
+      }
+      
+      text += item.str;
+      lastY = currentY;
+      lastX = currentX + (item.width || 0);
+    }
+    
+    fullText += text + '\n\n';
+  }
+  
+  return fullText.trim();
+}
+```
 
 ### GitHub-Style Diff Algorithm
 1. **Unified View**:
