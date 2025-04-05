@@ -17,7 +17,7 @@
 ## Phase 3: Markdown Processing
 - [x] Implement Marked.js for rendering
 - [x] Create toggle between raw and rendered Markdown views
-- [ ] Implement syntax highlighting for code blocks
+- [x] Implement syntax highlighting for code blocks
 - [x] Add character-level diffing for precise changes
 
 ## Phase 4: GitHub-Style Diff Implementation
@@ -44,7 +44,7 @@
 
 ## Extra Features
 - [x] PDF text extraction with formatting preservation
-- [ ] Syntax highlighting in diff view
+- [x] Syntax highlighting in diff view
 - [x] Keyboard shortcuts for navigation
 - [ ] Export diff report as HTML or PDF
 - [x] Dark mode support
@@ -57,4 +57,4 @@
 - [x] Install pixelmatch
 - [x] Setup Tailwind CSS and related dependencies
 - [x] Install and configure shadcn/ui
-- [ ] Add Prismjs for syntax highlighting 
+- [x] Add Prismjs for syntax highlighting 

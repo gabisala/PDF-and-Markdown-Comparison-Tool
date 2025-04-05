@@ -1,4 +1,16 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Prism from 'prismjs';
+// Import Prism language components
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-tsx';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-markdown';
+// Prism theme is imported in MarkdownViewer
 
 export const GitHubDiffViewer = ({ diffData }) => {
   const [viewMode, setViewMode] = useState('unified'); // 'unified' or 'split'
@@ -297,12 +309,73 @@ export const GitHubDiffViewer = ({ diffData }) => {
   );
 };
 
+// Helper function to detect language from file name or line content
+const detectLanguage = (fileName, lineContent) => {
+  // Extract extension from filename
+  if (fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    
+    const languageMap = {
+      'js': 'javascript',
+      'jsx': 'jsx',
+      'ts': 'typescript',
+      'tsx': 'tsx',
+      'css': 'css',
+      'py': 'python',
+      'sh': 'bash',
+      'json': 'json',
+      'md': 'markdown'
+    };
+    
+    if (languageMap[ext]) {
+      return languageMap[ext];
+    }
+  }
+  
+  // Detect from content (basic detection)
+  if (lineContent) {
+    if (lineContent.startsWith('```') && lineContent.length > 3) {
+      const lang = lineContent.substring(3).trim();
+      if (Prism.languages[lang]) {
+        return lang;
+      }
+    }
+  }
+  
+  return null;
+};
+
+// Helper function to apply syntax highlighting to code
+const highlightCode = (code, language) => {
+  if (!language || !Prism.languages[language]) {
+    return code;
+  }
+  
+  try {
+    return Prism.highlight(code, Prism.languages[language], language);
+  } catch (e) {
+    console.error('Syntax highlighting error:', e);
+    return code;
+  }
+};
+
 // Helper function to render word-level diff content
-const renderWordDiff = (line) => {
+const renderWordDiff = (line, fileName) => {
   if (!line.wordDiff) {
+    // Apply syntax highlighting if in a code block
+    const language = detectLanguage(fileName, line.content);
+    
+    // If it's a recognizable code language, apply highlighting
+    if (language) {
+      const highlightedCode = highlightCode(line.content, language);
+      return <span dangerouslySetInnerHTML={{ __html: highlightedCode }} />;
+    }
+    
     return <span>{line.content}</span>;
   }
 
+  // For word-level diff, we can't easily apply syntax highlighting
+  // while preserving the diff highlighting, so we just use the regular diff
   return (
     <>
       {line.wordDiff.map((part, i) => (
@@ -335,6 +408,9 @@ const CollapsedSection = ({ count, onClick }) => (
 const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) => {
   const fileName = diffData.fileName || 'Unknown File';
   const lines = diffData.lines || [];
+  
+  // Try to determine the language from the file name
+  const fileLanguage = detectLanguage(fileName, null);
   
   // Process lines for rendering, handling collapsed sections
   const renderLines = [];
@@ -431,7 +507,12 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
                     ? 'text-red-600 dark:text-red-300' 
                     : 'dark:text-gray-300'
                 }`}>
-                  {line.hasPair ? renderWordDiff(line) : line.content}
+                  {line.hasPair 
+                    ? renderWordDiff(line, fileName) 
+                    : fileLanguage 
+                      ? <span dangerouslySetInnerHTML={{ __html: highlightCode(line.content, fileLanguage) }} />
+                      : line.content
+                  }
                 </td>
               </tr>
             );
@@ -445,6 +526,9 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
 const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) => {
   const fileName = diffData.fileName || 'Unknown File';
   const lines = diffData.lines || [];
+  
+  // Try to determine the language from the file name
+  const fileLanguage = detectLanguage(fileName, null);
   
   // Process lines for rendering, handling collapsed sections
   const renderLines = [];
@@ -581,7 +665,12 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
                         ? 'text-red-600 dark:text-red-300' 
                         : 'dark:text-gray-300'
                     }`}>
-                      {line.hasPair ? renderWordDiff(line) : line.content}
+                      {line.hasPair 
+                        ? renderWordDiff(line, fileName) 
+                        : fileLanguage 
+                          ? <span dangerouslySetInnerHTML={{ __html: highlightCode(line.content, fileLanguage) }} />
+                          : line.content
+                      }
                     </td>
                   </tr>
                 );
@@ -651,7 +740,12 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
                         ? 'text-green-600 dark:text-green-300' 
                         : 'dark:text-gray-300'
                     }`}>
-                      {line.hasPair ? renderWordDiff(line) : line.content}
+                      {line.hasPair 
+                        ? renderWordDiff(line, fileName) 
+                        : fileLanguage 
+                          ? <span dangerouslySetInnerHTML={{ __html: highlightCode(line.content, fileLanguage) }} />
+                          : line.content
+                      }
                     </td>
                   </tr>
                 );

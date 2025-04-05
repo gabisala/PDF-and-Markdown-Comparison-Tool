@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { marked } from 'marked';
+import Prism from 'prismjs';
+// Import Prism language components
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-tsx';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-markdown';
+// Import Prism theme
+import 'prismjs/themes/prism-tomorrow.css';
 
 const MarkdownViewer = ({ markdownContent, fileName = 'Untitled.md' }) => {
   const [viewMode, setViewMode] = useState('rendered'); // 'rendered' or 'raw'
@@ -12,7 +25,19 @@ const MarkdownViewer = ({ markdownContent, fileName = 'Untitled.md' }) => {
         breaks: true,
         gfm: true,
         headerIds: true,
-        mangle: false
+        mangle: false,
+        highlight: function(code, lang) {
+          try {
+            // Only highlight if the language is specified and supported by Prism
+            if (lang && Prism.languages[lang]) {
+              return Prism.highlight(code, Prism.languages[lang], lang);
+            }
+            return code;
+          } catch (e) {
+            console.error('Syntax highlighting error:', e);
+            return code;
+          }
+        }
       });
 
       // Convert markdown to HTML
@@ -25,6 +50,13 @@ const MarkdownViewer = ({ markdownContent, fileName = 'Untitled.md' }) => {
       }
     }
   }, [markdownContent, viewMode]);
+
+  // Apply syntax highlighting to code blocks after render
+  useEffect(() => {
+    if (viewMode === 'rendered') {
+      Prism.highlightAll();
+    }
+  }, [html, viewMode]);
 
   if (!markdownContent) {
     return (
