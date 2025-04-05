@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background glow effect -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:white;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:white;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- File icons -->
+  <g transform="translate(128, 96)">
+    <!-- PDF File icon -->
+    <path d="M40 0H180C191.046 0 200 8.95431 200 20V220C200 231.046 191.046 240 180 240H20C8.95431 240 0 231.046 0 220V40L40 0Z" fill="white"/>
+    <path d="M40 0V40H0L40 0Z" fill="#e2e2e2"/>
+    <text x="50" y="120" font-family="Arial" font-size="48" font-weight="bold" fill="#333">PDF</text>
+    
+    <!-- Arrow -->
+    <g transform="translate(220, 100)">
+      <path d="M0 20H60M30 0L60 20L30 40" stroke="white" stroke-width="8" fill="none"/>
+    </g>
+    
+    <!-- Markdown File icon -->
+    <g transform="translate(300, 0)">
+      <path d="M40 0H180C191.046 0 200 8.95431 200 20V220C200 231.046 191.046 240 180 240H20C8.95431 240 0 231.046 0 220V40L40 0Z" fill="white"/>
+      <path d="M40 0V40H0L40 0Z" fill="#e2e2e2"/>
+      <text x="50" y="120" font-family="Arial" font-size="72" font-weight="bold" fill="#333">M</text>
+    </g>
+  </g>
+  
+  <!-- Text -->
+  <text x="256" y="400" font-family="Arial" font-size="36" font-weight="bold" fill="white" text-anchor="middle">PDF and Markdown</text>
+  <text x="256" y="450" font-family="Arial" font-size="36" font-weight="bold" fill="white" text-anchor="middle">Comparison Tool</text>
+</svg> 
