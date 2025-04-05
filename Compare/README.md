@@ -37,6 +37,8 @@ A browser-based tool that allows side-by-side comparison of PDF and Markdown fil
   - Dark mode support
   - Responsive design
   - Keyboard shortcuts
+  - Fixed navigation controls for easy access
+  - Optimized spacing for improved readability
 
 ## Technologies Used
 

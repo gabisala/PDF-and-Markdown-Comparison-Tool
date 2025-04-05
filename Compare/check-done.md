@@ -39,6 +39,8 @@
 - [x] Create sidebar indicators showing difference locations
 - [x] Add responsive layout adjustments
 - [x] Polish UI with high-contrast colors for differences
+- [x] Optimize UI spacing for improved readability
+- [x] Implement fixed navigation buttons for easy access
 
 ## Extra Features
 - [x] PDF text extraction with formatting preservation

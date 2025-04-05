@@ -65,6 +65,8 @@ A browser-based tool that allows drag-and-drop comparison of PDF and Markdown fi
 4. Implement mini-map for scrollbar indicators
 5. Add responsive layout adjustments
 6. Polish UI with high-contrast colors for differences
+7. Optimize UI spacing for improved readability
+8. Implement fixed navigation buttons in the upper right corner
 
 ## Technical Implementation Details
 
@@ -165,6 +167,7 @@ async function extractTextFromPDF(pdfBuffer) {
   - DiffControls (toggles between unified/split views)
   - NavigationControls (page navigation, diff navigation)
   - DiffSummary (statistics on differences)
+  - FixedNavigation (always-visible navigation buttons)
 
 ### Key Functions
 - `processPDF(file)`: Converts PDF to canvas using PDF.js

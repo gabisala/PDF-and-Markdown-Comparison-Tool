@@ -45,6 +45,8 @@ Imagine a web-based tool similar to GitHub's diff view, but specialized for comp
   - Next/previous difference navigation
   - Zoom controls for PDFs
 - Dark/light mode support
+- Optimized UI spacing for improved readability
+- Fixed navigation buttons for easy access throughout the application
 
 ## Technical Stack
 
