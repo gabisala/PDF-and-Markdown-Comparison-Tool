@@ -5,6 +5,7 @@ export const GitHubDiffViewer = ({ diffData }) => {
   const [currentDiffIndex, setCurrentDiffIndex] = useState(0);
   const [diffIndices, setDiffIndices] = useState([]);
   const [collapsedSections, setCollapsedSections] = useState({});
+  const [showFloatingNav, setShowFloatingNav] = useState(false);
   const diffContentRef = useRef(null);
   
   // Memoize the navigation function
@@ -21,6 +22,26 @@ export const GitHubDiffViewer = ({ diffData }) => {
       );
     }
   }, [diffIndices]);
+  
+  // Track scroll position to show/hide floating nav based on diff content visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      if (diffContentRef.current) {
+        const rect = diffContentRef.current.getBoundingClientRect();
+        // Show floating nav when the diff content is in view
+        setShowFloatingNav(
+          rect.top < window.innerHeight && 
+          rect.bottom > 0
+        );
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    // Initial check
+    handleScroll();
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Add keyboard navigation with proper dependencies
   useEffect(() => {
@@ -168,7 +189,7 @@ export const GitHubDiffViewer = ({ diffData }) => {
 
   return (
     <div className="flex flex-col h-full relative">
-      {/* Diff Controls */}
+      {/* Diff Controls (without navigation) */}
       <div className="mb-3 flex flex-col gap-2">
         {/* Diff Summary */}
         <div className="flex items-center text-sm bg-gray-50 p-2 rounded border">
@@ -184,7 +205,7 @@ export const GitHubDiffViewer = ({ diffData }) => {
         </div>
 
         {/* View Toggle */}
-        <div className="flex justify-between items-center">
+        <div className="flex items-center">
           <div className="flex gap-1">
             <button 
               className={`px-3 py-1 text-sm rounded-md ${viewMode === 'unified' ? 'bg-blue-600 text-white' : 'bg-gray-100 border border-gray-300'}`}
@@ -199,56 +220,31 @@ export const GitHubDiffViewer = ({ diffData }) => {
               Split
             </button>
           </div>
-          <div className="flex gap-1 items-center">
-            <span className="text-xs text-gray-500 mr-1">
-              {diffIndices.length > 0 
-                ? `${currentDiffIndex + 1}/${diffIndices.length}` 
-                : '0/0'}
-            </span>
-            <button 
-              className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
-              onClick={() => navigateDiff('prev')}
-              disabled={diffIndices.length === 0}
-              title="Previous change (p/k)"
-            >
-              &lt; Prev
-            </button>
-            <button 
-              className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
-              onClick={() => navigateDiff('next')}
-              disabled={diffIndices.length === 0}
-              title="Next change (n/j)"
-            >
-              Next &gt;
-            </button>
-          </div>
         </div>
       </div>
       
-      {/* Floating Navigation Controls */}
-      <div className="fixed bottom-4 right-4 flex gap-1 items-center bg-white p-2 rounded-lg shadow-lg border z-50">
-        <span className="text-xs text-gray-500 mr-1">
-          {diffIndices.length > 0 
-            ? `${currentDiffIndex + 1}/${diffIndices.length}` 
-            : '0/0'}
-        </span>
-        <button 
-          className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
-          onClick={() => navigateDiff('prev')}
-          disabled={diffIndices.length === 0}
-          title="Previous change (p/k)"
-        >
-          &lt; Prev
-        </button>
-        <button 
-          className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
-          onClick={() => navigateDiff('next')}
-          disabled={diffIndices.length === 0}
-          title="Next change (n/j)"
-        >
-          Next &gt;
-        </button>
-      </div>
+      {/* Floating Navigation Controls - Only show when diff content is in view */}
+      {showFloatingNav && diffIndices.length > 0 && (
+        <div className="fixed bottom-4 right-4 flex gap-1 items-center bg-white p-2 rounded-lg shadow-lg border z-50">
+          <span className="text-xs text-gray-500 mr-1">
+            {`${currentDiffIndex + 1}/${diffIndices.length}`}
+          </span>
+          <button 
+            className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
+            onClick={() => navigateDiff('prev')}
+            title="Previous change (p/k)"
+          >
+            &lt; Prev
+          </button>
+          <button 
+            className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
+            onClick={() => navigateDiff('next')}
+            title="Next change (n/j)"
+          >
+            Next &gt;
+          </button>
+        </div>
+      )}
       
       {/* Diff Content */}
       <div className="flex-1 overflow-auto border rounded" ref={diffContentRef}>
@@ -352,7 +348,7 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
   }
   
   return (
-    <div className="p-0 font-mono text-sm w-full">
+    <div className="p-0 font-mono text-sm w-full bg-white">
       <table className="w-full border-collapse">
         <tbody>
           {/* File header */}
@@ -495,7 +491,7 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
   return (
     <div className="flex">
       <div className="w-1/2 border-r">
-        <div className="p-0 font-mono text-sm w-full">
+        <div className="p-0 font-mono text-sm w-full bg-white">
           <table className="w-full border-collapse">
             <tbody>
               {/* File header */}
@@ -555,7 +551,7 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
       </div>
       
       <div className="w-1/2">
-        <div className="p-0 font-mono text-sm w-full">
+        <div className="p-0 font-mono text-sm w-full bg-white">
           <table className="w-full border-collapse">
             <tbody>
               {/* File header */}
