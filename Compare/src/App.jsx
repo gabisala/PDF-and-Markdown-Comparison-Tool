@@ -5,7 +5,6 @@ import MarkdownViewer from './components/MarkdownViewer';
 import ProgressIndicator from './components/ProgressIndicator';
 import { processFile, isMarkdownFile, isPDFFile } from './lib/fileProcessor';
 import { generateTextDiff, formatDiffForViewer } from './lib/diffUtility';
-import logo from './assets/images/logo.svg';
 
 function App() {
   const [selectedFiles, setSelectedFiles] = useState(null);
@@ -103,7 +102,6 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="flex flex-col items-center justify-center mb-8">
-        <img src={logo} alt="PDF and Markdown Comparison Tool" className="w-32 h-32 mb-4" />
         <h1 className="text-3xl font-bold text-center">
           PDF and Markdown Comparison Tool
         </h1>
