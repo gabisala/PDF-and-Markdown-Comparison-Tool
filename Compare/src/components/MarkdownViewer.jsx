@@ -69,7 +69,7 @@ const MarkdownViewer = ({ markdownContent, fileName = 'Untitled.md' }) => {
             dangerouslySetInnerHTML={{ __html: html }}
           />
         ) : (
-          <pre className="font-mono text-sm whitespace-pre-wrap dark:text-gray-200">{markdownContent}</pre>
+          <pre className="font-mono text-sm whitespace-pre-wrap text-gray-800 dark:text-gray-200">{markdownContent}</pre>
         )}
       </div>
     </div>

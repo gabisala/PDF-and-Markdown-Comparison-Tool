@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Add custom utility class for code blocks */
+@layer utilities {
+  .code-block {
+    @apply font-mono whitespace-pre-wrap;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -72,5 +79,38 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Basic contrast for code elements in light mode */
+  pre, code {
+    @apply text-gray-900;
+  }
+  
+  /* Ensure code is readable in dark mode */
+  .dark pre, .dark code {
+    @apply text-gray-100;
+  }
+  
+  /* Handle pre blocks in light colored containers */
+  .bg-white pre, .bg-white code,
+  .bg-gray-50 pre, .bg-gray-50 code,
+  .bg-gray-100 pre, .bg-gray-100 code {
+    @apply text-gray-900;
+  }
+  
+  /* Handle pre blocks in dark colored containers */
+  .dark .bg-gray-800 pre, .dark .bg-gray-800 code,
+  .dark .bg-gray-900 pre, .dark .bg-gray-900 code,
+  .dark .bg-gray-700 pre, .dark .bg-gray-700 code {
+    @apply text-gray-100;
+  }
+  
+  /* Ensure monospace font is properly contrasted */
+  .font-mono {
+    @apply text-gray-900;
+  }
+  
+  .dark .font-mono {
+    @apply text-gray-100;
   }
 } 

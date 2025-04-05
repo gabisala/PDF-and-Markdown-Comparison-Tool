@@ -110,7 +110,7 @@ function App() {
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow h-full">
           <h3 className="font-medium mb-2 dark:text-gray-200">{fileData.name}</h3>
           <div className="border p-3 rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 max-h-96 overflow-auto">
-            <pre className="text-xs dark:text-gray-200">{fileData.content ? fileData.content : "No content available"}</pre>
+            <pre className="text-xs text-gray-800 dark:text-gray-200">{fileData.content ? fileData.content : "No content available"}</pre>
           </div>
         </div>
       );
