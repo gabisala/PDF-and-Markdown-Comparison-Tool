@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import DropZone from './components/DropZone';
 import { GitHubDiffViewer } from './components/GitHubDiffViewer';
 import MarkdownViewer from './components/MarkdownViewer';
@@ -14,6 +14,19 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
   const [processingProgress, setProcessingProgress] = useState(null);
+  
+  // Add refs for scrolling
+  const topRef = useRef(null);
+  const differencesRef = useRef(null);
+  
+  // Scroll functions
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
+  const scrollToDifferences = () => {
+    differencesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleFileSelect = async (files) => {
     if (!files || files.length !== 2) {
@@ -73,23 +86,27 @@ function App() {
     
     if (isMarkdownFile(selectedFiles[index])) {
       return (
-        <MarkdownViewer 
-          markdownContent={fileData.content} 
-          fileName={fileData.name} 
-        />
+        <div className="bg-white h-full">
+          <MarkdownViewer 
+            markdownContent={fileData.content} 
+            fileName={fileData.name} 
+          />
+        </div>
       );
     } else if (isPDFFile(selectedFiles[index])) {
       return (
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="font-medium mb-2">{fileData.name}</h3>
-          <div className="border p-3 rounded bg-gray-50 max-h-96 overflow-auto whitespace-pre-wrap font-mono text-sm">
+        <div className="h-full flex flex-col overflow-hidden border rounded-lg shadow-sm bg-white">
+          <div className="flex justify-between items-center p-3 border-b bg-gray-50">
+            <div className="font-medium truncate">{fileData.name}</div>
+          </div>
+          <div className="flex-1 overflow-auto p-6 whitespace-pre-wrap font-mono text-sm">
             {fileData.content ? fileData.content : "No content available"}
           </div>
         </div>
       );
     } else {
       return (
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white p-4 rounded-lg shadow h-full">
           <h3 className="font-medium mb-2">{fileData.name}</h3>
           <div className="border p-3 rounded bg-gray-50 max-h-96 overflow-auto">
             <pre className="text-xs">{fileData.content ? fileData.content : "No content available"}</pre>
@@ -101,7 +118,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
-      <div className="flex flex-col items-center justify-center mb-8">
+      <div ref={topRef} className="flex flex-col items-center justify-center mb-8">
         <h1 className="text-3xl font-bold text-center">
           PDF and Markdown Comparison Tool
         </h1>
@@ -130,12 +147,36 @@ function App() {
         )}
         
         {diffData && (
-          <div className="bg-white rounded-lg shadow p-6 my-6">
+          <div ref={differencesRef} className="bg-white rounded-lg shadow p-6 my-6">
             <h2 className="text-lg font-semibold mb-4">Differences</h2>
             <GitHubDiffViewer diffData={diffData} />
           </div>
         )}
       </div>
+
+      {/* Navigation Buttons */}
+      {diffData && (
+        <div className="fixed top-1/2 -translate-y-1/2 right-4 flex flex-col gap-2 z-50">
+          <button 
+            onClick={scrollToTop}
+            className="bg-gray-600 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition-colors"
+            title="Go to Top"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+          <button 
+            onClick={scrollToDifferences}
+            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+            title="Go to Differences"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
