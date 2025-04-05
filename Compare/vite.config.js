@@ -6,5 +6,17 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true
+  },
+  optimizeDeps: {
+    include: ['pdfjs-dist/build/pdf.worker.mjs']
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          pdfjs: ['pdfjs-dist']
+        }
+      }
+    }
   }
 }) 

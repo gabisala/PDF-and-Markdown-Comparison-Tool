@@ -1,7 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Initialize PDF.js worker
+const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 /**
  * Extract text content from a PDF file
@@ -10,20 +11,40 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
  */
 export const extractTextFromPDF = async (pdfBuffer) => {
   try {
-    const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+    // Load the PDF document
+    const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });
+    const pdf = await loadingTask.promise;
+    
+    console.log(`PDF loaded successfully. Number of pages: ${pdf.numPages}`);
+    
     let fullText = '';
     
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(item => item.str).join(' ');
-      fullText += pageText + '\n';
+    // Process each page
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      try {
+        console.log(`Processing page ${pageNum}`);
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map(item => item.str)
+          .join(' ');
+        fullText += pageText + '\n';
+      } catch (pageError) {
+        console.error(`Error processing page ${pageNum}:`, pageError);
+        // Continue with next page instead of failing completely
+        fullText += `[Error reading page ${pageNum}]\n`;
+      }
     }
     
-    return fullText.trim();
+    const result = fullText.trim();
+    if (!result) {
+      throw new Error('No text content extracted from PDF');
+    }
+    
+    return result;
   } catch (error) {
     console.error('Error extracting text from PDF:', error);
-    throw new Error('Failed to extract text from PDF');
+    throw new Error(`Failed to extract text from PDF: ${error.message}`);
   }
 };
 
@@ -34,11 +55,15 @@ export const extractTextFromPDF = async (pdfBuffer) => {
  */
 export const processPDFFile = async (file) => {
   try {
+    console.log('Starting PDF processing for file:', file.name);
+    
     // Read file as ArrayBuffer
     const buffer = await file.arrayBuffer();
+    console.log('File successfully read as ArrayBuffer');
     
     // Extract text from PDF
     const text = await extractTextFromPDF(buffer);
+    console.log('Text successfully extracted from PDF');
     
     return {
       text,
