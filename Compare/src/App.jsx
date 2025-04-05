@@ -118,15 +118,38 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 transition-colors">
-      <div ref={topRef} className="flex flex-col items-center justify-center mb-8">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 pt-12 transition-colors">
+      <div ref={topRef} className="flex flex-col items-center justify-center mb-12">
         <div className="w-full flex justify-end mb-4">
-          <ThemeToggle />
         </div>
         <h1 className="text-3xl font-bold text-center dark:text-white">
           PDF and Markdown Comparison Tool
         </h1>
       </div>
+      
+      {/* Fixed navigation buttons */}
+      <div className="fixed top-4 right-4 flex flex-col items-center gap-2 z-50">
+        <ThemeToggle />
+        <button 
+          onClick={scrollToTop}
+          className="bg-gray-600 text-white p-2 rounded-full shadow-lg hover:bg-gray-700 transition-colors"
+          title="Go to Top"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+        <button 
+          onClick={scrollToDifferences}
+          className="bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          title="Go to Differences"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      
       <div className="max-w-7xl mx-auto grid gap-6">
         <DropZone onFileSelect={handleFileSelect} />
         
@@ -157,30 +180,6 @@ function App() {
           </div>
         )}
       </div>
-
-      {/* Navigation Buttons */}
-      {diffData && (
-        <div className="fixed top-1/2 -translate-y-1/2 right-4 flex flex-col gap-2 z-50">
-          <button 
-            onClick={scrollToTop}
-            className="bg-gray-600 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition-colors"
-            title="Go to Top"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-          <button 
-            onClick={scrollToDifferences}
-            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-            title="Go to Differences"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      )}
     </div>
   );
 }
