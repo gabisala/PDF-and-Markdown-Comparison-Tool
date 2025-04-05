@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export const GitHubDiffViewer = ({ diffData }) => {
   const [viewMode, setViewMode] = useState('unified'); // 'unified' or 'split'
@@ -7,48 +7,8 @@ export const GitHubDiffViewer = ({ diffData }) => {
   const [collapsedSections, setCollapsedSections] = useState({});
   const diffContentRef = useRef(null);
   
-  // Find indices of changed lines to support navigation
-  useEffect(() => {
-    if (diffData && diffData.lines) {
-      const indices = diffData.lines
-        .map((line, index) => line.type !== 'unchanged' ? index : null)
-        .filter(index => index !== null);
-      
-      setDiffIndices(indices);
-      if (indices.length > 0 && currentDiffIndex >= indices.length) {
-        setCurrentDiffIndex(0);
-      }
-      
-      // Initialize all sections as collapsed
-      const newCollapsedSections = {};
-      diffData.lines.forEach((line, index) => {
-        if (line.isCollapsibleStart) {
-          newCollapsedSections[index] = true;
-        }
-      });
-      setCollapsedSections(newCollapsedSections);
-    }
-  }, [diffData, viewMode]);
-  
-  // Scroll to the current diff when it changes
-  useEffect(() => {
-    if (diffContentRef.current && diffIndices.length > 0) {
-      const lineElements = diffContentRef.current.querySelectorAll('tr.diff-line');
-      const lineToScrollTo = lineElements[diffIndices[currentDiffIndex]];
-      
-      if (lineToScrollTo) {
-        lineToScrollTo.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Add a highlight effect
-        lineToScrollTo.classList.add('bg-blue-100');
-        setTimeout(() => {
-          lineToScrollTo.classList.remove('bg-blue-100');
-        }, 1000);
-      }
-    }
-  }, [currentDiffIndex, diffIndices, viewMode, collapsedSections]);
-  
-  const navigateDiff = (direction) => {
+  // Memoize the navigation function
+  const navigateDiff = useCallback((direction) => {
     if (diffIndices.length === 0) return;
     
     if (direction === 'next') {
@@ -60,8 +20,129 @@ export const GitHubDiffViewer = ({ diffData }) => {
         prevIndex === 0 ? diffIndices.length - 1 : prevIndex - 1
       );
     }
-  };
-
+  }, [diffIndices]);
+  
+  // Add keyboard navigation with proper dependencies
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Only handle navigation keys if not in an input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      
+      if (e.key === 'n' || e.key === 'j') {
+        navigateDiff('next');
+      } else if (e.key === 'p' || e.key === 'k') {
+        navigateDiff('prev');
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigateDiff]);
+  
+  // Find indices of changed lines to support navigation
+  useEffect(() => {
+    if (diffData && diffData.lines) {
+      // Create a new array to track actual line differences (not just rendering indices)
+      const indices = [];
+      
+      // Track the actual indices of modified lines in the original data
+      diffData.lines.forEach((line, index) => {
+        // Only include lines that are actual differences (added or removed)
+        if (line.type === 'added' || line.type === 'removed') {
+          // Check if this line is in a collapsed section
+          const isInCollapsedSection = Object.entries(collapsedSections).some(([startIndex, isCollapsed]) => {
+            if (!isCollapsed) return false;
+            const section = diffData.lines[parseInt(startIndex)];
+            return section && 
+                   section.isCollapsibleStart && 
+                   index >= parseInt(startIndex) && 
+                   index < parseInt(startIndex) + section.collapsibleCount;
+          });
+          
+          if (!isInCollapsedSection) {
+            indices.push(index);
+          }
+        }
+      });
+      
+      setDiffIndices(indices);
+      if (indices.length > 0 && currentDiffIndex >= indices.length) {
+        setCurrentDiffIndex(0);
+      }
+    }
+  }, [diffData, collapsedSections]);
+  
+  // Scroll to the current diff when it changes
+  useEffect(() => {
+    if (diffContentRef.current && diffIndices.length > 0) {
+      // Get the actual index in the original data that we want to navigate to
+      const targetLineIndex = diffIndices[currentDiffIndex];
+      
+      // Find all line elements
+      const allLineElements = diffContentRef.current.querySelectorAll('tr.diff-line');
+      
+      // Find the element that has the matching original line index
+      let lineToScrollTo = null;
+      for (const lineElement of allLineElements) {
+        const lineIndexAttr = lineElement.getAttribute('data-original-index');
+        if (lineIndexAttr && parseInt(lineIndexAttr) === targetLineIndex) {
+          lineToScrollTo = lineElement;
+          break;
+        }
+      }
+      
+      if (lineToScrollTo) {
+        // Scroll the line into view with some padding
+        lineToScrollTo.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        
+        // Add a stronger highlight effect with animation
+        lineToScrollTo.classList.add('highlight-current-diff');
+        
+        // Remove any previous highlights
+        const prevHighlights = diffContentRef.current.querySelectorAll('.highlight-current-diff');
+        prevHighlights.forEach(el => {
+          if (el !== lineToScrollTo) {
+            el.classList.remove('highlight-current-diff');
+          }
+        });
+      }
+    }
+  }, [currentDiffIndex, diffIndices]);
+  
+  // Add CSS for the highlight animation using inline styles
+  useEffect(() => {
+    // Create a style element for the highlight animation
+    const styleEl = document.createElement('style');
+    styleEl.type = 'text/css';
+    styleEl.innerHTML = `
+      .highlight-current-diff {
+        position: relative;
+        z-index: 1;
+      }
+      .highlight-current-diff::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(59, 130, 246, 0.25); /* Lighter blue with lower opacity */
+        border-left: 3px solid rgba(37, 99, 235, 0.7); /* Semi-transparent blue border */
+        z-index: -1;
+        pointer-events: none;
+      }
+    `;
+    document.head.appendChild(styleEl);
+    
+    // Clean up the style element on unmount
+    return () => {
+      document.head.removeChild(styleEl);
+    };
+  }, []);
+  
   const toggleCollapsedSection = (index) => {
     setCollapsedSections(prev => ({
       ...prev,
@@ -86,7 +167,7 @@ export const GitHubDiffViewer = ({ diffData }) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       {/* Diff Controls */}
       <div className="mb-3 flex flex-col gap-2">
         {/* Diff Summary */}
@@ -125,21 +206,48 @@ export const GitHubDiffViewer = ({ diffData }) => {
                 : '0/0'}
             </span>
             <button 
-              className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50"
+              className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
               onClick={() => navigateDiff('prev')}
               disabled={diffIndices.length === 0}
+              title="Previous change (p/k)"
             >
               &lt; Prev
             </button>
             <button 
-              className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50"
+              className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
               onClick={() => navigateDiff('next')}
               disabled={diffIndices.length === 0}
+              title="Next change (n/j)"
             >
               Next &gt;
             </button>
           </div>
         </div>
+      </div>
+      
+      {/* Floating Navigation Controls */}
+      <div className="fixed bottom-4 right-4 flex gap-1 items-center bg-white p-2 rounded-lg shadow-lg border z-50">
+        <span className="text-xs text-gray-500 mr-1">
+          {diffIndices.length > 0 
+            ? `${currentDiffIndex + 1}/${diffIndices.length}` 
+            : '0/0'}
+        </span>
+        <button 
+          className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
+          onClick={() => navigateDiff('prev')}
+          disabled={diffIndices.length === 0}
+          title="Previous change (p/k)"
+        >
+          &lt; Prev
+        </button>
+        <button 
+          className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
+          onClick={() => navigateDiff('next')}
+          disabled={diffIndices.length === 0}
+          title="Next change (n/j)"
+        >
+          Next &gt;
+        </button>
       </div>
       
       {/* Diff Content */}
@@ -228,13 +336,18 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
       renderLines.push({
         type: 'collapsed',
         count: line.collapsibleCount,
-        index: i
+        index: i,
+        originalIndex: i
       });
       
       // Skip the lines in the collapsed section
       skipCount = line.collapsibleCount - 1;
     } else {
-      renderLines.push(line);
+      // Add the original index to each line for navigation
+      renderLines.push({
+        ...line,
+        originalIndex: i
+      });
     }
   }
   
@@ -266,6 +379,7 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
             return (
               <tr 
                 key={index} 
+                data-original-index={line.originalIndex}
                 className={`diff-line hover:bg-gray-50 ${
                   line.type === 'added' 
                     ? 'bg-green-50' 
@@ -324,13 +438,18 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
       renderLines.push({
         type: 'collapsed',
         count: line.collapsibleCount,
-        index: i
+        index: i,
+        originalIndex: i
       });
       
       // Skip the lines in the collapsed section
       skipCount = line.collapsibleCount - 1;
     } else {
-      renderLines.push(line);
+      // Add the original index to each line for navigation
+      renderLines.push({
+        ...line,
+        originalIndex: i
+      });
     }
   }
   
@@ -418,6 +537,7 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
                 return (
                   <tr 
                     key={index} 
+                    data-original-index={line.originalIndex}
                     className={`diff-line hover:bg-gray-50 ${line.type === 'removed' ? 'bg-red-50' : ''}`}
                   >
                     <td className="w-10 text-right text-gray-500 pr-1 select-none border-r">
@@ -477,6 +597,7 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
                 return (
                   <tr 
                     key={index} 
+                    data-original-index={line.originalIndex}
                     className={`diff-line hover:bg-gray-50 ${line.type === 'added' ? 'bg-green-50' : ''}`}
                   >
                     <td className="w-10 text-right text-gray-500 pr-1 select-none border-r">
