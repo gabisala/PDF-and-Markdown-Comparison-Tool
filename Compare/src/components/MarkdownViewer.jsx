@@ -28,25 +28,33 @@ const MarkdownViewer = ({ markdownContent, fileName = 'Untitled.md' }) => {
 
   if (!markdownContent) {
     return (
-      <div className="h-full flex items-center justify-center p-6 border rounded-lg shadow-sm">
-        <p className="text-gray-500">No markdown content to display</p>
+      <div className="h-full flex items-center justify-center p-6 border rounded-lg shadow-sm dark:border-gray-700">
+        <p className="text-gray-500 dark:text-gray-400">No markdown content to display</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden border rounded-lg shadow-sm">
-      <div className="flex justify-between items-center p-3 border-b bg-gray-50">
-        <div className="font-medium truncate">{fileName}</div>
+    <div className="h-full flex flex-col overflow-hidden border rounded-lg shadow-sm dark:border-gray-700">
+      <div className="flex justify-between items-center p-3 border-b bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+        <div className="font-medium truncate dark:text-white">{fileName}</div>
         <div className="flex gap-1">
           <button 
-            className={`px-3 py-1 text-sm rounded-md ${viewMode === 'rendered' ? 'bg-blue-600 text-white' : 'bg-gray-100 border border-gray-300'}`}
+            className={`px-3 py-1 text-sm rounded-md ${
+              viewMode === 'rendered' 
+                ? 'bg-blue-600 text-white dark:bg-blue-500' 
+                : 'bg-gray-100 border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200'
+            }`}
             onClick={() => setViewMode('rendered')}
           >
             Preview
           </button>
           <button 
-            className={`px-3 py-1 text-sm rounded-md ${viewMode === 'raw' ? 'bg-blue-600 text-white' : 'bg-gray-100 border border-gray-300'}`}
+            className={`px-3 py-1 text-sm rounded-md ${
+              viewMode === 'raw' 
+                ? 'bg-blue-600 text-white dark:bg-blue-500' 
+                : 'bg-gray-100 border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200'
+            }`}
             onClick={() => setViewMode('raw')}
           >
             Raw
@@ -54,14 +62,14 @@ const MarkdownViewer = ({ markdownContent, fileName = 'Untitled.md' }) => {
         </div>
       </div>
       
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-6 dark:bg-gray-800">
         {viewMode === 'rendered' ? (
           <div 
-            className="prose max-w-none"
+            className="prose max-w-none dark:prose-invert dark:text-white"
             dangerouslySetInnerHTML={{ __html: html }}
           />
         ) : (
-          <pre className="font-mono text-sm whitespace-pre-wrap">{markdownContent}</pre>
+          <pre className="font-mono text-sm whitespace-pre-wrap dark:text-gray-200">{markdownContent}</pre>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@ import DropZone from './components/DropZone';
 import { GitHubDiffViewer } from './components/GitHubDiffViewer';
 import MarkdownViewer from './components/MarkdownViewer';
 import ProgressIndicator from './components/ProgressIndicator';
+import ThemeToggle from './components/ThemeToggle';
 import { processFile, isMarkdownFile, isPDFFile } from './lib/fileProcessor';
 import { generateTextDiff, formatDiffForViewer } from './lib/diffUtility';
 
@@ -86,7 +87,7 @@ function App() {
     
     if (isMarkdownFile(selectedFiles[index])) {
       return (
-        <div className="bg-white h-full">
+        <div className="bg-white dark:bg-gray-800 h-full">
           <MarkdownViewer 
             markdownContent={fileData.content} 
             fileName={fileData.name} 
@@ -95,21 +96,21 @@ function App() {
       );
     } else if (isPDFFile(selectedFiles[index])) {
       return (
-        <div className="h-full flex flex-col overflow-hidden border rounded-lg shadow-sm bg-white">
-          <div className="flex justify-between items-center p-3 border-b bg-gray-50">
+        <div className="h-full flex flex-col overflow-hidden border rounded-lg shadow-sm bg-white dark:bg-gray-800">
+          <div className="flex justify-between items-center p-3 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
             <div className="font-medium truncate">{fileData.name}</div>
           </div>
-          <div className="flex-1 overflow-auto p-6 whitespace-pre-wrap font-mono text-sm">
+          <div className="flex-1 overflow-auto p-6 whitespace-pre-wrap font-mono text-sm dark:text-gray-200">
             {fileData.content ? fileData.content : "No content available"}
           </div>
         </div>
       );
     } else {
       return (
-        <div className="bg-white p-4 rounded-lg shadow h-full">
-          <h3 className="font-medium mb-2">{fileData.name}</h3>
-          <div className="border p-3 rounded bg-gray-50 max-h-96 overflow-auto">
-            <pre className="text-xs">{fileData.content ? fileData.content : "No content available"}</pre>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow h-full">
+          <h3 className="font-medium mb-2 dark:text-gray-200">{fileData.name}</h3>
+          <div className="border p-3 rounded bg-gray-50 dark:bg-gray-700 dark:border-gray-600 max-h-96 overflow-auto">
+            <pre className="text-xs dark:text-gray-200">{fileData.content ? fileData.content : "No content available"}</pre>
           </div>
         </div>
       );
@@ -117,9 +118,12 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 transition-colors">
       <div ref={topRef} className="flex flex-col items-center justify-center mb-8">
-        <h1 className="text-3xl font-bold text-center">
+        <div className="w-full flex justify-end mb-4">
+          <ThemeToggle />
+        </div>
+        <h1 className="text-3xl font-bold text-center dark:text-white">
           PDF and Markdown Comparison Tool
         </h1>
       </div>
@@ -134,8 +138,8 @@ function App() {
         )}
         
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg shadow p-6">
-            <p className="text-red-600">{error}</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg shadow p-6">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
         )}
         
@@ -147,8 +151,8 @@ function App() {
         )}
         
         {diffData && (
-          <div ref={differencesRef} className="bg-white rounded-lg shadow p-6 my-6">
-            <h2 className="text-lg font-semibold mb-4">Differences</h2>
+          <div ref={differencesRef} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 my-6">
+            <h2 className="text-lg font-semibold mb-4 dark:text-white">Differences</h2>
             <GitHubDiffViewer diffData={diffData} />
           </div>
         )}

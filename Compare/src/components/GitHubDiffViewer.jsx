@@ -155,6 +155,12 @@ export const GitHubDiffViewer = ({ diffData }) => {
         z-index: -1;
         pointer-events: none;
       }
+      
+      /* Dark mode styles for highlight */
+      .dark .highlight-current-diff::after {
+        background-color: rgba(59, 130, 246, 0.3); /* Slightly more visible in dark mode */
+        border-left: 3px solid rgba(96, 165, 250, 0.8); /* Brighter blue border for dark mode */
+      }
     `;
     document.head.appendChild(styleEl);
     
@@ -174,7 +180,7 @@ export const GitHubDiffViewer = ({ diffData }) => {
   if (!diffData) {
     return (
       <div className="h-full flex items-center justify-center">
-        <p className="text-gray-500">No differences to display</p>
+        <p className="text-gray-500 dark:text-gray-400">No differences to display</p>
       </div>
     );
   }
@@ -192,76 +198,101 @@ export const GitHubDiffViewer = ({ diffData }) => {
       {/* Diff Controls (without navigation) */}
       <div className="mb-3 flex flex-col gap-2">
         {/* Diff Summary */}
-        <div className="flex items-center text-sm bg-gray-50 p-2 rounded border">
-          <span className="mr-3">{diffSummary.files} changed files</span>
-          <span className="flex items-center text-green-600 mr-3">
-            <span className="inline-block w-3 h-3 bg-green-500 rounded-sm mr-1"></span>
+        <div className="flex items-center text-sm bg-gray-50 dark:bg-gray-800 p-2 rounded border dark:border-gray-700">
+          <span className="mr-3 dark:text-gray-200">{diffSummary.files} changed files</span>
+          <span className="flex items-center text-green-600 dark:text-green-400 mr-3">
+            <span className="inline-block w-3 h-3 bg-green-500 dark:bg-green-400 rounded-sm mr-1"></span>
             +{diffSummary.additions}
           </span>
-          <span className="flex items-center text-red-600">
-            <span className="inline-block w-3 h-3 bg-red-500 rounded-sm mr-1"></span>
+          <span className="flex items-center text-red-600 dark:text-red-400">
+            <span className="inline-block w-3 h-3 bg-red-500 dark:bg-red-400 rounded-sm mr-1"></span>
             -{diffSummary.deletions}
           </span>
         </div>
-
-        {/* View Toggle */}
-        <div className="flex items-center">
-          <div className="flex gap-1">
+        
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium dark:text-gray-300">View Mode:</span>
+          <div className="flex border rounded overflow-hidden">
             <button 
-              className={`px-3 py-1 text-sm rounded-md ${viewMode === 'unified' ? 'bg-blue-600 text-white' : 'bg-gray-100 border border-gray-300'}`}
+              className={`px-3 py-1 text-sm ${
+                viewMode === 'unified' 
+                  ? 'bg-blue-600 text-white dark:bg-blue-500' 
+                  : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200'
+              }`}
               onClick={() => setViewMode('unified')}
             >
               Unified
             </button>
             <button 
-              className={`px-3 py-1 text-sm rounded-md ${viewMode === 'split' ? 'bg-blue-600 text-white' : 'bg-gray-100 border border-gray-300'}`}
+              className={`px-3 py-1 text-sm ${
+                viewMode === 'split' 
+                  ? 'bg-blue-600 text-white dark:bg-blue-500' 
+                  : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200'
+              }`}
               onClick={() => setViewMode('split')}
             >
               Split
             </button>
           </div>
+          
+          {/* Diff Navigation Stats */}
+          {diffIndices.length > 0 && (
+            <div className="ml-4 text-sm text-gray-600 dark:text-gray-300">
+              Showing diff {currentDiffIndex + 1} of {diffIndices.length}
+            </div>
+          )}
         </div>
       </div>
       
-      {/* Floating Navigation Controls - Only show when diff content is in view */}
-      {showFloatingNav && diffIndices.length > 0 && (
-        <div className="fixed bottom-4 right-4 flex gap-1 items-center bg-white p-2 rounded-lg shadow-lg border z-50">
-          <span className="text-xs text-gray-500 mr-1">
-            {`${currentDiffIndex + 1}/${diffIndices.length}`}
-          </span>
-          <button 
-            className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
-            onClick={() => navigateDiff('prev')}
-            title="Previous change (p/k)"
-          >
-            &lt; Prev
-          </button>
-          <button 
-            className="px-3 py-1 text-sm rounded-md bg-gray-100 border border-gray-300 disabled:opacity-50 hover:bg-gray-200"
-            onClick={() => navigateDiff('next')}
-            title="Next change (n/j)"
-          >
-            Next &gt;
-          </button>
-        </div>
-      )}
-      
       {/* Diff Content */}
-      <div className="flex-1 overflow-auto border rounded" ref={diffContentRef}>
+      <div 
+        ref={diffContentRef} 
+        className="flex-1 overflow-x-auto border rounded shadow-sm bg-white dark:bg-gray-800 dark:border-gray-700"
+      >
         {viewMode === 'unified' ? (
           <UnifiedDiffView 
             diffData={diffData} 
-            collapsedSections={collapsedSections}
-            toggleCollapsedSection={toggleCollapsedSection}
+            collapsedSections={collapsedSections} 
+            toggleCollapsedSection={toggleCollapsedSection} 
           />
         ) : (
           <SplitDiffView 
             diffData={diffData} 
-            collapsedSections={collapsedSections}
+            collapsedSections={collapsedSections} 
             toggleCollapsedSection={toggleCollapsedSection}
           />
         )}
       </div>
+      
+      {/* Floating Diff Navigation */}
+      {showFloatingNav && diffIndices.length > 1 && (
+        <div className="fixed bottom-4 right-4 flex gap-2 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-lg border dark:border-gray-700 z-50">
+          <div className="flex gap-1">
+            <button
+              onClick={() => navigateDiff('prev')}
+              className="p-2 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+              title="Previous difference (p/k)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-700 dark:text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <button
+              onClick={() => navigateDiff('next')}
+              className="p-2 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+              title="Next difference (n/j)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-700 dark:text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          <span className="text-xs flex items-center text-gray-500 dark:text-gray-400">
+            {currentDiffIndex + 1}/{diffIndices.length}
+          </span>
+        </div>
+      )}
     </div>
   );
 };
@@ -277,7 +308,13 @@ const renderWordDiff = (line) => {
       {line.wordDiff.map((part, i) => (
         <span 
           key={i} 
-          className={part.removed ? 'bg-red-200' : part.added ? 'bg-green-200' : ''}
+          className={
+            part.removed 
+              ? 'bg-red-200/70 dark:bg-red-800/50 dark:text-red-100' 
+              : part.added 
+              ? 'bg-green-200/70 dark:bg-green-800/50 dark:text-green-100' 
+              : ''
+          }
         >
           {part.value}
         </span>
@@ -288,23 +325,9 @@ const renderWordDiff = (line) => {
 
 // Collapsible section component
 const CollapsedSection = ({ count, onClick }) => (
-  <tr 
-    onClick={onClick}
-    className="bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
-  >
-    <td colSpan={4} className="py-1 px-2 text-center text-gray-500 text-sm">
-      <button className="flex items-center justify-center w-full">
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className="h-4 w-4 mr-1" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-        {count} unchanged line{count !== 1 ? 's' : ''}
-      </button>
+  <tr>
+    <td colSpan="4" className="text-center py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer" onClick={onClick}>
+      <span className="text-gray-600 dark:text-gray-300 text-sm">... {count} unchanged lines ...</span>
     </td>
   </tr>
 );
@@ -348,12 +371,12 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
   }
   
   return (
-    <div className="p-0 font-mono text-sm w-full bg-white">
+    <div className="p-0 font-mono text-sm w-full bg-white dark:bg-gray-800">
       <table className="w-full border-collapse">
         <tbody>
           {/* File header */}
-          <tr className="bg-gray-100 border-b">
-            <td colSpan={4} className="p-2 text-gray-700 font-bold">
+          <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
+            <td colSpan={4} className="p-2 text-gray-700 dark:text-gray-200 font-bold">
               {fileName}
             </td>
           </tr>
@@ -371,34 +394,42 @@ const UnifiedDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }
               );
             }
             
+            // Determine background based on line type
+            let bgClass = "hover:bg-gray-50 dark:hover:bg-gray-700/50";
+            if (line.type === 'added') {
+              bgClass = "bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-800/40";
+            } else if (line.type === 'removed') {
+              bgClass = "bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-800/40";
+            }
+            
             // Regular diff line
             return (
               <tr 
                 key={index} 
                 data-original-index={line.originalIndex}
-                className={`diff-line hover:bg-gray-50 ${
-                  line.type === 'added' 
-                    ? 'bg-green-50' 
-                    : line.type === 'removed' 
-                    ? 'bg-red-50' 
-                    : ''
-                }`}
+                className={`diff-line ${bgClass}`}
               >
-                <td className="w-10 text-right text-gray-500 pr-1 select-none border-r">
+                <td className="w-10 text-right text-gray-500 dark:text-gray-400 pr-1 select-none border-r dark:border-gray-600">
                   {line.oldLineNum || ''}
                 </td>
-                <td className="w-10 text-right text-gray-500 pr-1 select-none border-r">
+                <td className="w-10 text-right text-gray-500 dark:text-gray-400 pr-1 select-none border-r dark:border-gray-600">
                   {line.newLineNum || ''}
                 </td>
-                <td className="w-6 text-center text-gray-500 select-none border-r">
-                  {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ''}
+                <td className="w-6 text-center text-gray-500 dark:text-gray-400 select-none border-r dark:border-gray-600">
+                  {line.type === 'added' ? (
+                    <span className="text-green-600 dark:text-green-400">+</span>
+                  ) : line.type === 'removed' ? (
+                    <span className="text-red-600 dark:text-red-400">-</span>
+                  ) : (
+                    ''
+                  )}
                 </td>
                 <td className={`pl-2 whitespace-pre-wrap ${
                   line.type === 'added' 
-                    ? 'text-green-600' 
+                    ? 'text-green-600 dark:text-green-300' 
                     : line.type === 'removed' 
-                    ? 'text-red-600' 
-                    : ''
+                    ? 'text-red-600 dark:text-red-300' 
+                    : 'dark:text-gray-300'
                 }`}>
                   {line.hasPair ? renderWordDiff(line) : line.content}
                 </td>
@@ -490,13 +521,13 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
   
   return (
     <div className="flex">
-      <div className="w-1/2 border-r">
-        <div className="p-0 font-mono text-sm w-full bg-white">
+      <div className="w-1/2 border-r dark:border-gray-600">
+        <div className="p-0 font-mono text-sm w-full bg-white dark:bg-gray-800">
           <table className="w-full border-collapse">
             <tbody>
               {/* File header */}
-              <tr className="bg-gray-100 border-b">
-                <td colSpan={2} className="p-2 text-gray-700 font-bold">
+              <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
+                <td colSpan={2} className="p-2 text-gray-700 dark:text-gray-200 font-bold">
                   {fileName} (Original)
                 </td>
               </tr>
@@ -509,9 +540,9 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
                     <tr 
                       key={`collapsed-${index}`}
                       onClick={() => toggleCollapsedSection(line.index)}
-                      className="bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                      className="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
                     >
-                      <td colSpan={2} className="py-1 px-2 text-center text-gray-500 text-sm">
+                      <td colSpan={2} className="py-1 px-2 text-center text-sm text-gray-500 dark:text-gray-300">
                         <button className="flex items-center justify-center w-full">
                           <svg 
                             xmlns="http://www.w3.org/2000/svg" 
@@ -529,17 +560,27 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
                   );
                 }
                 
+                // Determine background based on line type
+                let bgClass = "hover:bg-gray-50 dark:hover:bg-gray-700/50";
+                if (line.type === 'removed') {
+                  bgClass = "bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-800/40";
+                }
+                
                 // Regular diff line
                 return (
                   <tr 
                     key={index} 
                     data-original-index={line.originalIndex}
-                    className={`diff-line hover:bg-gray-50 ${line.type === 'removed' ? 'bg-red-50' : ''}`}
+                    className={`diff-line ${bgClass}`}
                   >
-                    <td className="w-10 text-right text-gray-500 pr-1 select-none border-r">
+                    <td className="w-10 text-right text-gray-500 dark:text-gray-400 pr-1 select-none border-r dark:border-gray-600">
                       {line.displayLineNum}
                     </td>
-                    <td className={`pl-2 whitespace-pre-wrap ${line.type === 'removed' ? 'text-red-600' : ''}`}>
+                    <td className={`pl-2 whitespace-pre-wrap ${
+                      line.type === 'removed' 
+                        ? 'text-red-600 dark:text-red-300' 
+                        : 'dark:text-gray-300'
+                    }`}>
                       {line.hasPair ? renderWordDiff(line) : line.content}
                     </td>
                   </tr>
@@ -551,12 +592,12 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
       </div>
       
       <div className="w-1/2">
-        <div className="p-0 font-mono text-sm w-full bg-white">
+        <div className="p-0 font-mono text-sm w-full bg-white dark:bg-gray-800">
           <table className="w-full border-collapse">
             <tbody>
               {/* File header */}
-              <tr className="bg-gray-100 border-b">
-                <td colSpan={2} className="p-2 text-gray-700 font-bold">
+              <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
+                <td colSpan={2} className="p-2 text-gray-700 dark:text-gray-200 font-bold">
                   {fileName} (Modified)
                 </td>
               </tr>
@@ -569,9 +610,9 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
                     <tr 
                       key={`collapsed-${index}`}
                       onClick={() => toggleCollapsedSection(line.index)}
-                      className="bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                      className="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
                     >
-                      <td colSpan={2} className="py-1 px-2 text-center text-gray-500 text-sm">
+                      <td colSpan={2} className="py-1 px-2 text-center text-sm text-gray-500 dark:text-gray-300">
                         <button className="flex items-center justify-center w-full">
                           <svg 
                             xmlns="http://www.w3.org/2000/svg" 
@@ -589,17 +630,27 @@ const SplitDiffView = ({ diffData, collapsedSections, toggleCollapsedSection }) 
                   );
                 }
                 
+                // Determine background based on line type
+                let bgClass = "hover:bg-gray-50 dark:hover:bg-gray-700/50";
+                if (line.type === 'added') {
+                  bgClass = "bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-800/40";
+                }
+                
                 // Regular diff line
                 return (
                   <tr 
                     key={index} 
                     data-original-index={line.originalIndex}
-                    className={`diff-line hover:bg-gray-50 ${line.type === 'added' ? 'bg-green-50' : ''}`}
+                    className={`diff-line ${bgClass}`}
                   >
-                    <td className="w-10 text-right text-gray-500 pr-1 select-none border-r">
+                    <td className="w-10 text-right text-gray-500 dark:text-gray-400 pr-1 select-none border-r dark:border-gray-600">
                       {line.displayLineNum}
                     </td>
-                    <td className={`pl-2 whitespace-pre-wrap ${line.type === 'added' ? 'text-green-600' : ''}`}>
+                    <td className={`pl-2 whitespace-pre-wrap ${
+                      line.type === 'added' 
+                        ? 'text-green-600 dark:text-green-300' 
+                        : 'dark:text-gray-300'
+                    }`}>
                       {line.hasPair ? renderWordDiff(line) : line.content}
                     </td>
                   </tr>
