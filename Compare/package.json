@@ -27,7 +27,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.17",
     "glob": "^10.3.10",
     "lru-cache": "^10.2.0",
@@ -35,5 +35,13 @@
     "rimraf": "^5.0.5",
     "tailwindcss": "^3.4.1",
     "vite": "^5.1.0"
+  },
+  "overrides": {
+    "glob": "^10.3.10",
+    "rimraf": "^5.0.5",
+    "inflight": "npm:lru-cache@^10.2.0",
+    "npmlog": "npm:@npmcli/npm-bundler@^1.0.0",
+    "gauge": "npm:@npmcli/gauge@^5.0.0",
+    "are-we-there-yet": "npm:@npmcli/promise-spawn@^6.0.0"
   }
 }
