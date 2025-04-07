@@ -7,6 +7,7 @@ import ThemeToggle from './components/ThemeToggle';
 import { processFile, isMarkdownFile, isPDFFile } from './lib/fileProcessor';
 import { generateTextDiff, formatDiffForViewer } from './lib/diffUtility';
 import { exportDiffAsHTML, exportDiffAsPDF } from './lib/utils';
+import SemanticComparison from './components/SemanticComparison';
 
 function App() {
   const [selectedFiles, setSelectedFiles] = useState(null);
@@ -16,10 +17,12 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
   const [processingProgress, setProcessingProgress] = useState(null);
+  const [showSemanticComparison, setShowSemanticComparison] = useState(false);
   
   // Add refs for scrolling
   const topRef = useRef(null);
   const differencesRef = useRef(null);
+  const semanticRef = useRef(null);
   
   // Add export dropdown state
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -34,6 +37,10 @@ function App() {
   
   const scrollToDifferences = () => {
     differencesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToSemantic = () => {
+    semanticRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // Close dropdown when clicking outside
@@ -61,6 +68,7 @@ function App() {
       setProcessedFiles(null);
       setDiffData(null);
       setError(null);
+      setShowSemanticComparison(false);
       return;
     }
 
@@ -69,6 +77,7 @@ function App() {
     setError(null);
     setProcessingProgress(0);
     setDiffData(null);
+    setShowSemanticComparison(false);
     
     try {
       // Process first file
@@ -98,6 +107,11 @@ function App() {
       console.log("Generated diff data:", formattedDiff);
       setDiffData(formattedDiff);
       setProcessingProgress(100);
+      
+      // Enable semantic comparison for text-based files
+      if (!arePDFs) {
+        setShowSemanticComparison(true);
+      }
     } catch (err) {
       console.error('Error processing files:', err);
       setError(err.message);
@@ -105,6 +119,7 @@ function App() {
       setDiffData(null);
     } finally {
       setLoading(false);
+      setProcessingStep('');
     }
   };
 
@@ -219,6 +234,17 @@ function App() {
             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </button>
+        {showSemanticComparison && (
+          <button
+            onClick={scrollToSemantic}
+            className="bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+            title="Go to Semantic Analysis"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L9.586 10l-1.293 1.293a1 1 0 101.414 1.414L11 11.414l1.293 1.293a1 1 0 001.414-1.414L12.414 10l1.293-1.293a1 1 0 00-1.414-1.414L11 8.586 9.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
       </div>
       
       <div className="max-w-7xl mx-auto grid gap-6">
@@ -299,6 +325,18 @@ function App() {
                 oldFileName: processedFiles?.[0]?.name,
                 newFileName: processedFiles?.[1]?.name
               }}
+            />
+          </div>
+        )}
+
+        {showSemanticComparison && processedFiles && (
+          <div ref={semanticRef} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+              Semantic Analysis
+            </h2>
+            <SemanticComparison
+              originalText={processedFiles[0].content}
+              transformedText={processedFiles[1].content}
             />
           </div>
         )}
