@@ -69,8 +69,12 @@ for (const packageName of packagesToReplace) {
   }
 }
 
-// Install newer versions
-console.log('Installing newer versions of packages...');
+// Install newer versions and ensure key packages are properly installed
+console.log('Installing newer versions of packages and key dependencies...');
 execSync('npm install glob@10.3.10 rimraf@5.0.5 lru-cache@10.2.0 --save-dev', { stdio: 'inherit' });
 
-console.log('Setup complete. The deprecated packages have been removed.'); 
+// Reinstall key packages that might be affected
+console.log('Reinstalling key packages to ensure they work properly...');
+execSync('npm install diff@7.0.0 react@18.2.0 react-dom@18.2.0 --save', { stdio: 'inherit' });
+
+console.log('Setup complete. The deprecated packages have been removed and key packages reinstalled.'); 
