@@ -1,4 +1,4 @@
-import { diffLines, diffWordsWithSpace } from 'diff';
+import { diffLines, diffWordsWithSpace } from './diffShim.js';
 
 /**
  * Normalize text extracted from PDF for better comparison

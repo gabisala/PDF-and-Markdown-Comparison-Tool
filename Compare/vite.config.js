@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
@@ -7,12 +8,17 @@ export default defineConfig({
     port: 5173,
     open: true
   },
+  resolve: {
+    alias: {
+      'diff': path.resolve(__dirname, 'node_modules/diff/lib/diff.js')
+    }
+  },
   optimizeDeps: {
-    include: ['pdfjs-dist']
+    include: ['pdfjs-dist', 'diff']
   },
   build: {
     commonjsOptions: {
-      include: [/pdfjs-dist/]
+      include: [/pdfjs-dist/, /diff/]
     }
   }
 }) 

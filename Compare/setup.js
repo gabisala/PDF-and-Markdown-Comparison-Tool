@@ -77,4 +77,36 @@ execSync('npm install glob@10.3.10 rimraf@5.0.5 lru-cache@10.2.0 --save-dev', { 
 console.log('Reinstalling key packages to ensure they work properly...');
 execSync('npm install diff@7.0.0 react@18.2.0 react-dom@18.2.0 --save', { stdio: 'inherit' });
 
+// Special handling for diff package ESM/CJS compatibility issues
+console.log('Setting up special handling for diff package...');
+try {
+  // Create a src/lib/vendor directory if it doesn't exist
+  const vendorDir = path.join(__dirname, 'src', 'lib', 'vendor');
+  if (!fs.existsSync(vendorDir)) {
+    fs.mkdirSync(vendorDir, { recursive: true });
+  }
+  
+  // Copy diff package to the vendor directory
+  const diffSrcDir = path.join(__dirname, 'node_modules', 'diff');
+  const diffDestDir = path.join(vendorDir, 'diff');
+  
+  // Remove existing directory if it exists
+  if (fs.existsSync(diffDestDir)) {
+    fs.rmSync(diffDestDir, { recursive: true, force: true });
+  }
+  
+  // Create diff directory
+  fs.mkdirSync(diffDestDir, { recursive: true });
+  
+  // Copy the necessary files
+  fs.copyFileSync(
+    path.join(diffSrcDir, 'dist', 'diff.js'), 
+    path.join(diffDestDir, 'diff.js')
+  );
+  
+  console.log('Copied diff package to src/lib/vendor/diff for easier importing');
+} catch (error) {
+  console.error('Error setting up diff package:', error);
+}
+
 console.log('Setup complete. The deprecated packages have been removed and key packages reinstalled.'); 
