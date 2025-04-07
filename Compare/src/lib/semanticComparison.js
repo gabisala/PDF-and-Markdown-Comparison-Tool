@@ -1,67 +1,4 @@
-import { pipeline } from '@xenova/transformers';
 import { Matrix } from 'ml-matrix';
-
-// Cache for the transformer model
-let model = null;
-let tokenizer = null;
-
-/**
- * Initialize the transformer model
- * @returns {Promise<void>}
- */
-export async function initializeModel() {
-  if (!model) {
-    try {
-      // Using a lightweight model suitable for browser
-      [model, tokenizer] = await Promise.all([
-        pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2'),
-        pipeline('tokenizer', 'Xenova/all-MiniLM-L6-v2')
-      ]);
-    } catch (error) {
-      console.error('Error initializing model:', error);
-      throw error;
-    }
-  }
-}
-
-/**
- * Calculate embeddings for a text
- * @param {string} text - The text to calculate embeddings for
- * @returns {Promise<Float32Array>} - The text embeddings
- */
-export async function calculateEmbeddings(text) {
-  if (!model) {
-    await initializeModel();
-  }
-
-  try {
-    const output = await model(text, {
-      pooling: 'mean',
-      normalize: true
-    });
-    return output.data;
-  } catch (error) {
-    console.error('Error calculating embeddings:', error);
-    throw error;
-  }
-}
-
-/**
- * Calculate cosine similarity between two embeddings
- * @param {Float32Array} emb1 - First embedding
- * @param {Float32Array} emb2 - Second embedding
- * @returns {number} - Cosine similarity score
- */
-export function calculateCosineSimilarity(emb1, emb2) {
-  const vec1 = new Matrix([Array.from(emb1)]);
-  const vec2 = new Matrix([Array.from(emb2)]);
-  
-  const dotProduct = Matrix.multiply(vec1, vec2.transpose()).get(0, 0);
-  const norm1 = Math.sqrt(Matrix.multiply(vec1, vec1.transpose()).get(0, 0));
-  const norm2 = Math.sqrt(Matrix.multiply(vec2, vec2.transpose()).get(0, 0));
-  
-  return dotProduct / (norm1 * norm2);
-}
 
 /**
  * Split text into paragraphs
@@ -73,6 +10,63 @@ export function splitIntoParagraphs(text) {
     .split(/\n\s*\n/)
     .map(p => p.trim())
     .filter(p => p.length > 0);
+}
+
+/**
+ * Create a bag of words vector from text
+ * @param {string} text - The text to vectorize
+ * @returns {Object} - Object with words as keys and counts as values
+ */
+function createBagOfWords(text) {
+  const words = text.toLowerCase()
+    .replace(/[^\w\s]/g, '') // Remove punctuation
+    .split(/\s+/)
+    .filter(word => word.length > 2); // Filter out short words
+  
+  const bagOfWords = {};
+  for (const word of words) {
+    bagOfWords[word] = (bagOfWords[word] || 0) + 1;
+  }
+  
+  return bagOfWords;
+}
+
+/**
+ * Calculate cosine similarity between two text segments
+ * @param {string} text1 - First text
+ * @param {string} text2 - Second text
+ * @returns {number} - Similarity score between 0 and 1
+ */
+function calculateTextSimilarity(text1, text2) {
+  const bow1 = createBagOfWords(text1);
+  const bow2 = createBagOfWords(text2);
+  
+  // Get unique words from both texts
+  const allWords = new Set([...Object.keys(bow1), ...Object.keys(bow2)]);
+  
+  // Create vectors
+  const vec1 = [];
+  const vec2 = [];
+  
+  for (const word of allWords) {
+    vec1.push(bow1[word] || 0);
+    vec2.push(bow2[word] || 0);
+  }
+  
+  // Calculate cosine similarity
+  const v1 = new Matrix([vec1]);
+  const v2 = new Matrix([vec2]);
+  
+  // Handle zero vectors
+  if (vec1.every(val => val === 0) || vec2.every(val => val === 0)) {
+    return 0;
+  }
+  
+  const dotProduct = Matrix.multiply(v1, v2.transpose()).get(0, 0);
+  const norm1 = Math.sqrt(Matrix.multiply(v1, v1.transpose()).get(0, 0));
+  const norm2 = Math.sqrt(Matrix.multiply(v2, v2.transpose()).get(0, 0));
+  
+  return dotProduct / (norm1 * norm2);
 }
 
 /**
@@ -88,8 +82,6 @@ export async function calculateParagraphSimilarities(originalText, transformedTe
   const results = [];
   
   for (let i = 0; i < originalParagraphs.length; i++) {
-    const originalEmb = await calculateEmbeddings(originalParagraphs[i]);
-    
     // Find best matching paragraph in transformed text
     let bestMatch = {
       paragraph: '',
@@ -97,8 +89,7 @@ export async function calculateParagraphSimilarities(originalText, transformedTe
     };
     
     for (const transformedPara of transformedParagraphs) {
-      const transformedEmb = await calculateEmbeddings(transformedPara);
-      const similarity = calculateCosineSimilarity(originalEmb, transformedEmb);
+      const similarity = calculateTextSimilarity(originalParagraphs[i], transformedPara);
       
       if (similarity > bestMatch.similarity) {
         bestMatch = {

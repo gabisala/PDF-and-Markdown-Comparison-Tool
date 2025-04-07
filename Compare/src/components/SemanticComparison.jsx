@@ -16,6 +16,7 @@ export default function SemanticComparison({ originalText, transformedText }) {
         setLoading(true);
         setError(null);
         
+        // Process markdown directly - our function handles text processing
         const paragraphResults = await calculateParagraphSimilarities(
           originalText,
           transformedText
@@ -26,7 +27,8 @@ export default function SemanticComparison({ originalText, transformedText }) {
         setResults(paragraphResults);
         setOverallScore(overall);
       } catch (err) {
-        setError(err.message);
+        console.error('Semantic comparison error:', err);
+        setError(err.message || 'Unknown error occurred');
       } finally {
         setLoading(false);
       }
@@ -89,11 +91,11 @@ export default function SemanticComparison({ originalText, transformedText }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <h4 className="text-sm font-medium mb-2">Original</h4>
-                <p className="text-sm">{result.original}</p>
+                <p className="text-sm whitespace-pre-wrap">{result.original}</p>
               </div>
               <div>
                 <h4 className="text-sm font-medium mb-2">Transformed</h4>
-                <p className="text-sm">{result.transformed}</p>
+                <p className="text-sm whitespace-pre-wrap">{result.transformed}</p>
               </div>
             </div>
             <div className="mt-2">
