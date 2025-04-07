@@ -38,35 +38,66 @@ function createBagOfWords(text) {
  * @returns {number} - Similarity score between 0 and 1
  */
 function calculateTextSimilarity(text1, text2) {
-  const bow1 = createBagOfWords(text1);
-  const bow2 = createBagOfWords(text2);
-  
-  // Get unique words from both texts
-  const allWords = new Set([...Object.keys(bow1), ...Object.keys(bow2)]);
-  
-  // Create vectors
-  const vec1 = [];
-  const vec2 = [];
-  
-  for (const word of allWords) {
-    vec1.push(bow1[word] || 0);
-    vec2.push(bow2[word] || 0);
-  }
-  
-  // Calculate cosine similarity
-  const v1 = new Matrix([vec1]);
-  const v2 = new Matrix([vec2]);
-  
-  // Handle zero vectors
-  if (vec1.every(val => val === 0) || vec2.every(val => val === 0)) {
+  // Handle empty or whitespace-only text
+  if (!text1 || !text2 || text1.trim() === '' || text2.trim() === '') {
     return 0;
   }
   
-  const dotProduct = Matrix.multiply(v1, v2.transpose()).get(0, 0);
-  const norm1 = Math.sqrt(Matrix.multiply(v1, v1.transpose()).get(0, 0));
-  const norm2 = Math.sqrt(Matrix.multiply(v2, v2.transpose()).get(0, 0));
-  
-  return dotProduct / (norm1 * norm2);
+  try {
+    const bow1 = createBagOfWords(text1);
+    const bow2 = createBagOfWords(text2);
+    
+    // Check if we have at least some words
+    if (Object.keys(bow1).length === 0 || Object.keys(bow2).length === 0) {
+      return 0;
+    }
+    
+    // Get unique words from both texts
+    const allWords = new Set([...Object.keys(bow1), ...Object.keys(bow2)]);
+    
+    // If no words in common, return 0
+    if (allWords.size === 0) {
+      return 0;
+    }
+    
+    // Create vectors
+    const vec1 = [];
+    const vec2 = [];
+    
+    for (const word of allWords) {
+      vec1.push(bow1[word] || 0);
+      vec2.push(bow2[word] || 0);
+    }
+    
+    // Handle zero vectors - if either vector is all zeros, similarity is 0
+    if (vec1.every(val => val === 0) || vec2.every(val => val === 0)) {
+      return 0;
+    }
+    
+    // Simple dot product calculation to avoid matrix library errors
+    let dotProduct = 0;
+    let norm1 = 0;
+    let norm2 = 0;
+    
+    for (let i = 0; i < vec1.length; i++) {
+      dotProduct += vec1[i] * vec2[i];
+      norm1 += vec1[i] * vec1[i];
+      norm2 += vec2[i] * vec2[i];
+    }
+    
+    // Calculate cosine similarity
+    norm1 = Math.sqrt(norm1);
+    norm2 = Math.sqrt(norm2);
+    
+    if (norm1 === 0 || norm2 === 0) {
+      return 0;
+    }
+    
+    return dotProduct / (norm1 * norm2);
+  } catch (error) {
+    console.error('Error calculating text similarity:', error);
+    return 0; // Return 0 similarity on error
+  }
 }
 
 /**
